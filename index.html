@@ -788,47 +788,40 @@
 </div>
 
 <script>
-// ── Supabase ──
-const SB_URL = 'https://pjutaztpsoqwfnuuihfx.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqdXRhenRwc29xd2ZudXVpaGZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NDEyNjUsImV4cCI6MjA5MDUxNzI2NX0.Yu9jBlhUv5rnCcQbTPgl2IdlelIdRz3mBKjfO4GUSXs';
-const H = {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY};
-
-async function sbGet(table, extra=''){
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?${extra}`, {headers:{...H,'Prefer':'return=representation'}});
-  if(!r.ok) return [];
-  return await r.json();
-}
-async function sbUpsert(table, data){
-  console.log('sbUpsert', table, data);
-  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {method:'POST', headers:{...H,'Prefer':'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify(data)});
-  console.log('sbUpsert result', table, r.status, r.ok);
-  if(!r.ok){ const t=await r.text(); console.error('sbUpsert error', t); }
-  return r.ok;
-}
-async function sbDelete(table, match){
-  const params = Object.entries(match).map(([k,v])=>`${k}=eq.${encodeURIComponent(v)}`).join('&');
-  const r = await fetch(`${SB_URL}/rest/v1/${table}?${params}`, {method:'DELETE', headers:H});
-  return r.ok;
-}
-
+// ── localStorage veri yönetimi ──
 const FLOORS = {
   1: Array.from({length:24},(_,i)=>String(101+i)),
   2: Array.from({length:24},(_,i)=>String(201+i)),
   3: Array.from({length:25},(_,i)=>String(301+i)),
 };
 
-async function loadGuests(){
-  return await sbGet('guests','order=id.asc');
-}
-async function saveGuests(){
-  await sbUpsert('guests', guests);
-}
-async function deleteGuest(id){
-  await sbDelete('guests',{id});
-}
+const DEFAULT_GUESTS = [
+  {id:1, name:"Ayşe Kaya",     room:"101", checkin:"25.03.2026", checkout:"02.04.2026", bday:"1985-06-14", status:"Konaklamada", amt:2400, pay:"kart"},
+  {id:2, name:"Murat Demir",   room:"205", checkin:"28.03.2026", checkout:"30.03.2026", bday:"1979-11-03", status:"Check-out",   amt:800,  pay:"nakit"},
+  {id:3, name:"Elif Şahin",    room:"315", checkin:"29.03.2026", checkout:"04.04.2026", bday:"1993-02-28", status:"Konaklamada", amt:3200, pay:"kart"},
+  {id:4, name:"Kemal Arslan",  room:"118", checkin:"27.03.2026", checkout:"30.03.2026", bday:"1970-07-19", status:"Check-out",   amt:1200, pay:"nakit"},
+  {id:5, name:"Zeynep Yıldız", room:"210", checkin:"30.03.2026", checkout:"05.04.2026", bday:"1996-09-05", status:"Bekleniyor",  amt:1800, pay:"beklemede"},
+  {id:6, name:"Hasan Çelik",   room:"301", checkin:"26.03.2026", checkout:"01.04.2026", bday:"1982-04-22", status:"Konaklamada", amt:1500, pay:"kart"},
+  {id:7, name:"Selin Aydın",   room:"212", checkin:"28.03.2026", checkout:"02.04.2026", bday:"1990-12-11", status:"Konaklamada", amt:2100, pay:"nakit"},
+  {id:8, name:"Tamer Öztürk",  room:"320", checkin:"30.03.2026", checkout:"06.04.2026", bday:"1975-08-30", status:"Bekleniyor",  amt:2800, pay:"beklemede"},
+  {id:9, name:"Deniz Kılıç",   room:"110", checkin:"29.03.2026", checkout:"01.04.2026", bday:"1988-01-17", status:"Konaklamada", amt:900,  pay:"kart"},
+  {id:10,name:"Berk Yılmaz",   room:"222", checkin:"25.03.2026", checkout:"30.03.2026", bday:"2000-05-08", status:"Check-out",   amt:1600, pay:"nakit"},
+];
 
-let guests = [];
-let nextId = 1;
+function loadGuests(){
+  try{ const s=localStorage.getItem('dora_guests'); if(s) return JSON.parse(s); }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_GUESTS));
+}
+function saveGuests(){ try{ localStorage.setItem('dora_guests',JSON.stringify(guests)); }catch(e){} }
+
+function loadRez(){
+  try{ const s=localStorage.getItem('dora_rez'); if(s) return JSON.parse(s); }catch(e){}
+  return [];
+}
+function saveRez_data(){ try{ localStorage.setItem('dora_rez',JSON.stringify(rezervasyonlar)); }catch(e){} }
+
+let guests = loadGuests();
+let nextId = guests.reduce((m,g)=>Math.max(m,g.id),0)+1;
 let ciPay='nakit', editId=null, delId=null;
 
 const ini = n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -923,15 +916,12 @@ function defaultRoomInfo(r){
   };
 }
 
-async function loadRoomInfos(){
-  const data = await sbGet('room_infos');
-  const obj = {};
-  data.forEach(r=>{ obj[r.room]=r; });
-  return obj;
+function loadRoomInfos(){
+  try{ const s=localStorage.getItem('dora_rooms'); if(s) return JSON.parse(s); }catch(e){}
+  return {};
 }
-async function saveRoomInfos(){
-  const rows = Object.values(roomInfos);
-  if(rows.length) await sbUpsert('room_infos', rows);
+function saveRoomInfos(){
+  try{ localStorage.setItem('dora_rooms',JSON.stringify(roomInfos)); }catch(e){}
 }
 
 let roomInfos = {};
@@ -1004,11 +994,11 @@ function toggleFeat(feat, elId){
   el.classList.remove('sel');
 }
 
-async function saveRoomInfo(){
+function saveRoomInfo(){
   const sqm = parseInt(document.getElementById('rm-sqm').value)||rmSqm;
   const view = document.getElementById('rm-view').value;
   roomInfos[editRoomNum] = {type:rmType, view, sqm, ac:rmAc, balcony:rmBalcony, tv:rmTV, safe:rmSafe, minibar:rmMinibar};
-  await saveRoomInfos();
+  saveRoomInfos();
   toast('✓ Oda bilgileri kaydedildi');
   closeRoomModal();
   renderRooms();
@@ -1104,50 +1094,50 @@ function renderOps(){
     </div>`).join('');
 }
 
-async function switchTab(tab,el){
+function switchTab(tab,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); el.classList.add('active');
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active')); document.getElementById('pane-'+tab).classList.add('active');
 
-  // Her sekmeye geçişte Supabase'den taze veri çek
+  // Her sekmeye geçişte localStorage'dan taze veri çek
   if(tab==='guests'){
-    guests = await loadGuests();
+    guests = loadGuests();
     nextId = guests.reduce((m,g)=>Math.max(m,g.id),0)+1;
     updateStats(); filterGuests('');
   }
   if(tab==='rezervasyon'){
-    rezervasyonlar = await loadRez();
+    rezervasyonlar = loadRez();
     rezNextId = rezervasyonlar.reduce((m,r)=>Math.max(m,r.id),0)+1;
     renderRezervasyonlar(); checkAllAlerts();
   }
   if(tab==='bakim'){
-    bakimData = await loadBakim();
+    bakimData = loadBakim();
     bakimNextId = bakimData.reduce((m,b)=>Math.max(m,b.id),0)+1;
     renderBakim(); checkBakimAlerts();
   }
   if(tab==='temizlik'){
-    tmzData = await loadTmz();
+    tmzData = loadTmz();
     renderTemizlik();
   }
   if(tab==='rooms') renderRooms();
   if(tab==='pay'){
-    guests = await loadGuests();
+    guests = loadGuests();
     renderPay();
   }
   if(tab==='today'){
-    guests = await loadGuests();
+    guests = loadGuests();
     renderOps();
   }
   if(tab==='longstay'){
-    guests = await loadGuests();
+    guests = loadGuests();
     renderLongStay();
   }
   if(tab==='istatistik'){
-    guests = await loadGuests();
+    guests = loadGuests();
     renderIstatistik();
   }
   if(tab==='takvim'){
-    guests = await loadGuests();
-    rezervasyonlar = await loadRez();
+    guests = loadGuests();
+    rezervasyonlar = loadRez();
     renderTakvim();
   }
 }
@@ -1194,7 +1184,7 @@ function openEdit(id){
 function closeCI(){ document.getElementById('modal-ci').classList.remove('open'); editId=null; }
 document.getElementById('modal-ci').addEventListener('click',e=>{ if(e.target===document.getElementById('modal-ci')) closeCI(); });
 
-async function saveGuest(){
+function saveGuest(){
   const name=document.getElementById('f-name').value.trim();
   const surn=document.getElementById('f-surn').value.trim();
   const room=document.getElementById('f-room').value;
@@ -1214,16 +1204,16 @@ async function saveGuest(){
     guests.unshift({id:nextId++,name:`${name} ${surn}`.trim(),room,checkin:td,checkout:toTR(dateOut),status,amt,pay:ciPay,idno,bday});
     toast('✓ Check-in tamamlandı');
   }
-  await saveGuests(); updateStats(); filterGuests(''); closeCI();
+  saveGuests(); updateStats(); filterGuests(''); closeCI();
 }
 
 function openDel(id){ delId=id; const g=guests.find(x=>x.id===id); document.getElementById('del-name').textContent=g?g.name:''; document.getElementById('modal-del').classList.add('open'); }
 function closeDel(){ document.getElementById('modal-del').classList.remove('open'); delId=null; }
 document.getElementById('modal-del').addEventListener('click',e=>{ if(e.target===document.getElementById('modal-del')) closeDel(); });
-async function confirmDel(){ await deleteGuest(delId); guests=guests.filter(g=>g.id!==delId); updateStats(); filterGuests(''); closeDel(); toast('Misafir silindi'); }
+function confirmDel(){  guests=guests.filter(g=>g.id!==delId); updateStats(); filterGuests(''); closeDel(); toast('Misafir silindi'); }
 
-async function quickCI(id){ const g=guests.find(x=>x.id===id); if(g){g.status='Konaklamada';await saveGuests();updateStats();filterGuests('');toast('✓ Check-in yapıldı');} }
-async function quickCO(id){ const g=guests.find(x=>x.id===id); if(g){g.status='Check-out';await saveGuests();updateStats();filterGuests('');toast('✓ Check-out yapıldı');} }
+function quickCI(id){ const g=guests.find(x=>x.id===id); if(g){g.status='Konaklamada';saveGuests();updateStats();filterGuests('');toast('✓ Check-in yapıldı');} }
+function quickCO(id){ const g=guests.find(x=>x.id===id); if(g){g.status='Check-out';saveGuests();updateStats();filterGuests('');toast('✓ Check-out yapıldı');} }
 
 function updateStats(){
   const occCount = guests.filter(g=>g.status==='Konaklamada').length;
@@ -1239,18 +1229,14 @@ function updateStats(){
 }
 
 // ── Rezervasyonlar ──
-async function loadRez(){
-  return await sbGet('rezervasyonlar','order=id.asc');
+function loadRez(){
+  try{ const s=localStorage.getItem('dora_rez'); if(s) return JSON.parse(s); }catch(e){}
+  return [];
 }
-async function saveRez_data(){
-  await sbUpsert('rezervasyonlar', rezervasyonlar);
-}
-async function deleteRez(id){
-  await sbDelete('rezervasyonlar',{id});
-}
+function saveRez_data(){ try{ localStorage.setItem('dora_rez',JSON.stringify(rezervasyonlar)); }catch(e){} }
 
-let rezervasyonlar = [];
-let rezNextId = 1;
+let rezervasyonlar = loadRez();
+let rezNextId = rezervasyonlar.reduce((m,r)=>Math.max(m,r.id),0)+1;
 let editRezId = null;
 
 function dateToObj(trDate){
@@ -1420,7 +1406,7 @@ function checkRezConflict(){
 }
 document.getElementById('rz-room').addEventListener('change',checkRezConflict);
 
-async function saveRez(){
+function saveRez(){
   console.log('saveRez called');
   const name=document.getElementById('rz-name').value.trim();
   const surn=document.getElementById('rz-surn').value.trim();
@@ -1448,22 +1434,22 @@ async function saveRez(){
     rezervasyonlar.push(data);
     toast('✓ Rezervasyon eklendi');
   }
-  await saveRez_data(); closeRezModal(); renderRezervasyonlar(); checkAllAlerts();
+  saveRez_data(); closeRezModal(); renderRezervasyonlar(); checkAllAlerts();
 }
 
-async function cancelRez(id){
+function cancelRez(id){
   if(!confirm('Rezervasyonu iptal etmek istiyor musunuz?')) return;
-  await deleteRez(id);
+  
   rezervasyonlar=rezervasyonlar.filter(r=>r.id!==id);
   renderRezervasyonlar(); checkAllAlerts();
   toast('Rezervasyon iptal edildi');
 }
 
-async function rezToCheckin(id){
+function rezToCheckin(id){
   const r=rezervasyonlar.find(x=>x.id===id); if(!r) return;
   guests.unshift({id:nextId++,name:r.name,room:r.room,checkin:r.cin,checkout:r.cout,status:'Konaklamada',amt:r.deposit||0,pay:'beklemede',phone:r.phone});
   rezervasyonlar=rezervasyonlar.filter(x=>x.id!==id);
-  await saveGuests(); await saveRez_data(); updateStats(); filterGuests('');
+  saveGuests(); saveRez_data(); updateStats(); filterGuests('');
   renderRezervasyonlar(); toast('✓ Rezervasyon check-in\'e alındı');
 }
 
@@ -1482,28 +1468,27 @@ const TMZ_ICONS  = {Bekliyor:'🟡',Temizleniyor:'🔵',Kontrol:'🟣',Temiz:'�
 const TMZ_CLS    = {Bekliyor:'tb-bek',Temizleniyor:'tb-tmz',Kontrol:'tb-knt',Temiz:'tb-ok'};
 const TMZ_CARD   = {Bekliyor:'t-bekliyor',Temizleniyor:'t-temizleniyor',Kontrol:'t-kontrol',Temiz:'t-temiz'};
 
-async function loadTmz(){
-  const data = await sbGet('tmz');
-  if(data.length>0) return data;
+function loadTmz(){
+  try{ const s=localStorage.getItem('dora_tmz'); if(s) return JSON.parse(s); }catch(e){}
   const all=[...FLOORS[1],...FLOORS[2],...FLOORS[3]];
   return all.map(r=>({room:r,status:'Bekliyor',updated_at:''}));
 }
-async function saveTmz(){
-  await sbUpsert('tmz', tmzData);
+function saveTmz(){
+  try{ localStorage.setItem('dora_tmz',JSON.stringify(tmzData)); }catch(e){}
 }
 
-let tmzData = [];
+let tmzData = loadTmz();
 
-async function tmzResetAll(){
+function tmzResetAll(){
   // After checkout, mark checked-out rooms as Bekliyor
   const coday=new Set(guests.filter(g=>g.status==='Check-out').map(g=>g.room));
   tmzData.forEach(t=>{ if(coday.has(t.room)&&t.status==='Temiz') t.status='Bekliyor'; });
-  await saveTmz(); renderTemizlik(); toast('Temizlik durumları güncellendi');
+  saveTmz(); renderTemizlik(); toast('Temizlik durumları güncellendi');
 }
 
-async function setTmzStatus(room, status){
+function setTmzStatus(room, status){
   const t=tmzData.find(x=>x.room===room);
-  if(t){ t.status=status; t.updated_at=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); await saveTmz(); renderTemizlik(); }
+  if(t){ t.status=status; t.updated_at=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); saveTmz(); renderTemizlik(); }
 }
 
 function renderTemizlik(){
@@ -1548,18 +1533,20 @@ function renderTemizlik(){
 }
 
 // ── Bakım / Arıza ──
-async function loadBakim(){
-  return await sbGet('bakim','order=id.desc');
+function loadBakim(){
+  try{ const s=localStorage.getItem('dora_bakim'); if(s) return JSON.parse(s); }catch(e){}
+  return [];
 }
-async function saveBakim_data(){
-  await sbUpsert('bakim', bakimData);
+function saveBakim_data(){
+  try{ localStorage.setItem('dora_bakim',JSON.stringify(bakimData)); }catch(e){}
 }
-async function deleteBakimRow(id){
-  await sbDelete('bakim',{id});
+function deleteBakimRow(id){
+  bakimData=bakimData.filter(b=>b.id!==id);
+  saveBakim_data();
 }
 
-let bakimData = [];
-let bakimNextId = 1;
+let bakimData = loadBakim();
+let bakimNextId = bakimData.reduce((m,b)=>Math.max(m,b.id),0)+1;
 let editBakimId = null;
 
 const BKM_CLS  = {'Açık':'bb-acik','Devam Ediyor':'bb-dev','Tamamlandı':'bb-ok'};
@@ -1608,19 +1595,19 @@ function renderBakim(){
     </div>`).join('');
 }
 
-async function setBakimStatus(id, status){
+function setBakimStatus(id, status){
   const b=bakimData.find(x=>x.id===id);
   if(b){
     b.status=status;
     if(status==='Tamamlandı') b.closedAt=new Date().toLocaleDateString('tr-TR');
-    await saveBakim_data(); renderBakim();
+    saveBakim_data(); renderBakim();
     toast(status==='Tamamlandı'?'✓ Arıza giderildi':'▶ Devam ediyor olarak işaretlendi');
   }
 }
 
-async function deleteBakim(id){
+function deleteBakim(id){
   if(!confirm('Bu kaydı silmek istiyor musunuz?')) return;
-  await deleteBakimRow(id);
+  deleteBakimRow(id);
   bakimData=bakimData.filter(b=>b.id!==id);
   renderBakim(); toast('Kayıt silindi');
 }
@@ -1660,7 +1647,7 @@ function editBakim(id){
 function closeBakimModal(){ document.getElementById('modal-bakim').classList.remove('open'); editBakimId=null; }
 document.getElementById('modal-bakim').addEventListener('click',e=>{ if(e.target===document.getElementById('modal-bakim')) closeBakimModal(); });
 
-async function saveBakim(){
+function saveBakim(){
   const room=document.getElementById('bkm-room').value;
   const descr=document.getElementById('bkm-desc').value.trim();
   if(!descr){ alert('Açıklama zorunludur.'); return; }
@@ -1682,7 +1669,7 @@ async function saveBakim(){
     bakimData.unshift(data);
     toast('✓ Arıza kaydedildi');
   }
-  await saveBakim_data(); closeBakimModal(); renderBakim();
+  saveBakim_data(); closeBakimModal(); renderBakim();
   // Update bakim tab badge
   checkBakimAlerts();
 }
@@ -1805,7 +1792,7 @@ function renderLsPayLog(g){
       </div>`).join('');
 }
 
-async function addLsPayment(){
+function addLsPayment(){
   const amt = parseInt(document.getElementById('ls-amt').value)||0;
   const date = document.getElementById('ls-date').value;
   const note = document.getElementById('ls-note').value.trim();
@@ -1814,15 +1801,15 @@ async function addLsPayment(){
   if(!g) return;
   if(!g.lsPayments) g.lsPayments=[];
   g.lsPayments.push({amt, pay:lsPay, date:toTR(date), note});
-  await saveGuests(); renderLsPayLog(g); renderLongStay();
+  saveGuests(); renderLsPayLog(g); renderLongStay();
   document.getElementById('ls-amt').value='';
   document.getElementById('ls-note').value='';
   toast('✓ Ödeme kaydedildi');
 }
 
-async function deleteLsPay(gid, idx){
+function deleteLsPay(gid, idx){
   const g=guests.find(x=>x.id===gid);
-  if(g&&g.lsPayments){ g.lsPayments.splice(idx,1); await saveGuests(); renderLsPayLog(g); renderLongStay(); toast('Ödeme silindi'); }
+  if(g&&g.lsPayments){ g.lsPayments.splice(idx,1); saveGuests(); renderLsPayLog(g); renderLongStay(); toast('Ödeme silindi'); }
 }
 
 // ── Extend Stay ──
@@ -1883,7 +1870,7 @@ function showExtPreview(g, newCO){
   prev.innerHTML = `Yeni çıkış tarihi: <strong>${newCO}</strong><br>Uzatma: <strong>+${extra} gece</strong><br>Toplam konaklama: <strong>${stayDays(g)+extra} gece</strong>`;
 }
 
-async function confirmExtend(){
+function confirmExtend(){
   const g = guests.find(x=>x.id===extGuestId);
   if(!g) return;
   const newDate = document.getElementById('ext-date').value;
@@ -1898,7 +1885,7 @@ async function confirmExtend(){
   if(newD<=oldD){ alert('Yeni tarih mevcut çıkış tarihinden sonra olmalıdır.'); return; }
   g.checkout = newCO;
   if(fee>0) g.amt += fee;
-  await saveGuests(); updateStats(); filterGuests('');
+  saveGuests(); updateStats(); filterGuests('');
   closeExtModal();
   toast('✓ Konaklama uzatıldı → '+newCO);
 }
@@ -2345,30 +2332,17 @@ function fixLayout(){
 fixLayout();
 window.addEventListener('resize', fixLayout);
 
-// ── Boot: load all data from Supabase ──
-async function boot(){
-  // Show loading
-  document.getElementById('guest-list').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">⏳ Veriler yükleniyor...</div>';
+// ── Init: tüm veriler localStorage'dan yüklendi ──
+// (guests, rezervasyonlar, bakimData, tmzData, roomInfos zaten tanımlı)
+nextId      = guests.reduce((m,g)=>Math.max(m,g.id),0)+1;
+rezNextId   = rezervasyonlar.reduce((m,r)=>Math.max(m,r.id),0)+1;
+bakimNextId = bakimData.reduce((m,b)=>Math.max(m,b.id),0)+1;
 
-  // Load all data in parallel
-  [guests, rezervasyonlar, bakimData, tmzData, roomInfos] = await Promise.all([
-    loadGuests(),
-    loadRez(),
-    loadBakim(),
-    loadTmz(),
-    loadRoomInfos()
-  ]);
+updateStats();
+renderGuests(guests);
+checkAllAlerts();
+checkBakimAlerts();
 
-  nextId    = guests.reduce((m,g)=>Math.max(m,g.id),0)+1;
-  rezNextId = rezervasyonlar.reduce((m,r)=>Math.max(m,r.id),0)+1;
-  bakimNextId = bakimData.reduce((m,b)=>Math.max(m,b.id),0)+1;
-
-  updateStats();
-  renderGuests(guests);
-  checkAllAlerts();
-  checkBakimAlerts();
-}
-boot();
 </script>
 </body>
 </html>
