@@ -817,23 +817,8 @@ const FLOORS = {
   3: Array.from({length:25},(_,i)=>String(301+i)),
 };
 
-const DEFAULT_GUESTS = [
-  {id:1, name:"Ayşe Kaya",     room:"101", checkin:"25.03.2026", checkout:"02.04.2026", bday:"1985-06-14", status:"Konaklamada", amt:2400, pay:"kart"},
-  {id:2, name:"Murat Demir",   room:"205", checkin:"28.03.2026", checkout:"30.03.2026", bday:"1979-11-03", status:"Check-out",   amt:800,  pay:"nakit"},
-  {id:3, name:"Elif Şahin",    room:"315", checkin:"29.03.2026", checkout:"04.04.2026", bday:"1993-02-28", status:"Konaklamada", amt:3200, pay:"kart"},
-  {id:4, name:"Kemal Arslan",  room:"118", checkin:"27.03.2026", checkout:"30.03.2026", bday:"1970-07-19", status:"Check-out",   amt:1200, pay:"nakit"},
-  {id:5, name:"Zeynep Yıldız", room:"210", checkin:"30.03.2026", checkout:"05.04.2026", bday:"1996-09-05", status:"Bekleniyor",  amt:1800, pay:"beklemede"},
-  {id:6, name:"Hasan Çelik",   room:"301", checkin:"26.03.2026", checkout:"01.04.2026", bday:"1982-04-22", status:"Konaklamada", amt:1500, pay:"kart"},
-  {id:7, name:"Selin Aydın",   room:"212", checkin:"28.03.2026", checkout:"02.04.2026", bday:"1990-12-11", status:"Konaklamada", amt:2100, pay:"nakit"},
-  {id:8, name:"Tamer Öztürk",  room:"320", checkin:"30.03.2026", checkout:"06.04.2026", bday:"1975-08-30", status:"Bekleniyor",  amt:2800, pay:"beklemede"},
-  {id:9, name:"Deniz Kılıç",   room:"110", checkin:"29.03.2026", checkout:"01.04.2026", bday:"1988-01-17", status:"Konaklamada", amt:900,  pay:"kart"},
-  {id:10,name:"Berk Yılmaz",   room:"222", checkin:"25.03.2026", checkout:"30.03.2026", bday:"2000-05-08", status:"Check-out",   amt:1600, pay:"nakit"},
-];
-
 async function loadGuests(){
-  const data = await sbGet('guests','order=id.asc');
-  if(data.length>0) return data;
-  return JSON.parse(JSON.stringify(DEFAULT_GUESTS));
+  return await sbGet('guests','order=id.asc');
 }
 async function saveGuests(){
   await sbUpsert('guests', guests);
@@ -1119,18 +1104,52 @@ function renderOps(){
     </div>`).join('');
 }
 
-function switchTab(tab,el){
+async function switchTab(tab,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); el.classList.add('active');
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active')); document.getElementById('pane-'+tab).classList.add('active');
+
+  // Her sekmeye geçişte Supabase'den taze veri çek
+  if(tab==='guests'){
+    guests = await loadGuests();
+    nextId = guests.reduce((m,g)=>Math.max(m,g.id),0)+1;
+    updateStats(); filterGuests('');
+  }
+  if(tab==='rezervasyon'){
+    rezervasyonlar = await loadRez();
+    rezNextId = rezervasyonlar.reduce((m,r)=>Math.max(m,r.id),0)+1;
+    renderRezervasyonlar(); checkAllAlerts();
+  }
+  if(tab==='bakim'){
+    bakimData = await loadBakim();
+    bakimNextId = bakimData.reduce((m,b)=>Math.max(m,b.id),0)+1;
+    renderBakim(); checkBakimAlerts();
+  }
+  if(tab==='temizlik'){
+    tmzData = await loadTmz();
+    renderTemizlik();
+  }
   if(tab==='rooms') renderRooms();
-  if(tab==='pay') renderPay();
-  if(tab==='today') renderOps();
-  if(tab==='longstay') renderLongStay();
-  if(tab==='rezervasyon') renderRezervasyonlar();
-  if(tab==='temizlik') renderTemizlik();
-  if(tab==='bakim') renderBakim();
-  if(tab==='istatistik') renderIstatistik();
-  if(tab==='takvim') renderTakvim();
+  if(tab==='pay'){
+    guests = await loadGuests();
+    renderPay();
+  }
+  if(tab==='today'){
+    guests = await loadGuests();
+    renderOps();
+  }
+  if(tab==='longstay'){
+    guests = await loadGuests();
+    renderLongStay();
+  }
+  if(tab==='istatistik'){
+    guests = await loadGuests();
+    renderIstatistik();
+  }
+  if(tab==='takvim'){
+    guests = await loadGuests();
+    rezervasyonlar = await loadRez();
+    renderTakvim();
+  }
 }
 
 // ── Pay selector ──
