@@ -648,12 +648,16 @@ function getRoomInfo(r){
 }
 
 function openRoomModal(r){
-  editRoomId=r; const ri=getRoomInfo(r);
-  rmType=ri.type; rmView=ri.view; rmAc=ri.ac; rmBal=ri.bal; rmTV=ri.tv; rmSafe=ri.safe; rmMbar=ri.mbar;
-  // Simple info display - no edit modal for now, just show guest info
   const g=guests.find(x=>x.room===r&&x.status==='Konaklamada');
-  if(g){ openEdit(g.id); }
-  else { toast('Oda '+r+' boş'); }
+  const ri=getRoomInfo(r);
+  const info = `Tip: ${ri.type} · ${ri.sqm}m² · Manzara: ${ri.view}${ri.ac?' · ❄️ Klima':''}${ri.bal?' · 🌿 Balkon':''}${ri.tv?' · 📺 TV':''}`;
+  if(g){
+    if(confirm(`Oda ${r}\n${info}\n\nMisafir: ${g.name}\nMisafiri düzenlemek ister misiniz?`)){
+      openEdit(g.id);
+    }
+  } else {
+    alert(`Oda ${r} — Boş\n${info}`);
+  }
 }
 
 // ═══════════════════════════════════════
@@ -772,18 +776,18 @@ function renderLongStay(){
   document.getElementById('ls-list').innerHTML=ls.length===0?`<div class="loading">7+ günlük misafir yok</div>`:ls.map(g=>{ const days=stayDays(g); const paid=lsTotalPaid(g); const pct=g.amt>0?Math.min(100,Math.round(paid/g.amt*100)):0; return `<div class="gcard" style="border-left:4px solid #1a1a1a"><div class="gtop"><div class="avatar">${ini(g.name)}</div><div class="ginfo"><div class="gname">${g.name}</div><div class="gmeta">Oda <strong>${g.room}</strong> · Giriş: ${g.checkin}</div><div class="gmeta" style="font-weight:700;color:#1a1a1a">🏠 ${days} gündür konaklamada</div></div><div class="gright"><span class="ls-badge">🏠 Uzun</span><div class="pay-amt" style="margin-top:4px">${fmt(g.amt)}</div></div></div><div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--border)"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px"><span>Ödeme</span><span style="font-weight:700;color:${pct===100?'var(--green)':'var(--amber)'}">${paid.toLocaleString('tr-TR')}₺ / ${(g.amt||0).toLocaleString('tr-TR')}₺ (%${pct})</span></div><div class="ls-bar"><div class="ls-bar-fill" style="width:${pct}%;background:${pct===100?'#1a8f4a':'#e8b84b'}"></div></div></div><div class="card-actions"><button class="abtn a-edit" onclick="openEdit(${g.id})">✏️ Düzenle</button><button class="abtn a-blk" onclick="openLs(${g.id})">💳 Ödeme</button><button class="abtn a-ext" onclick="openExt(${g.id})">📅 Uzat</button></div></div>`; }).join('');
 }
 
-function lsTotalPaid(g){ return ((g.lspays)||[]).reduce((s,p)=>s+(p.amt||0),0); }
+function lsTotalPaid(g){ return ((g.lspayments)||[]).reduce((s,p)=>s+(p.amt||0),0); }
 function selLsPay(t){ lsPay=t; document.getElementById('ls-cash').classList.toggle('sel',t==='nakit'); document.getElementById('ls-card').classList.toggle('sel',t==='kart'); }
 
 function openLs(id){ lsGuestId=id; const g=guests.find(x=>x.id===id); if(!g) return; document.getElementById('ls-title').textContent=g.name+' — Ödemeler'; document.getElementById('ls-amt').value=''; document.getElementById('ls-note').value=''; document.getElementById('ls-date').value=new Date().toISOString().split('T')[0]; selLsPay('nakit'); renderLsLog(g); document.getElementById('modal-ls').classList.add('open'); }
 function closeLs(){ document.getElementById('modal-ls').classList.remove('open'); lsGuestId=null; }
 document.getElementById('modal-ls').addEventListener('click',e=>{ if(e.target.id==='modal-ls') closeLs(); });
 
-function renderLsLog(g){ const log=(g.lspays)||[]; document.getElementById('ls-log').innerHTML=log.length===0?`<div style="color:var(--text3);font-size:13px;padding:6px">Henüz kayıt yok</div>`:log.map((p,i)=>`<div class="pm-entry"><div><strong>${p.amt.toLocaleString('tr-TR')}₺</strong> <span class="pbadge ${p.pay==='nakit'?'p-cash':'p-card'}" style="font-size:10px">${p.pay==='nakit'?'💵':'💳'}</span></div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--text2)">${p.date}${p.note?' · '+p.note:''}</span><button class="pm-del" onclick="delLsPay(${g.id},${i})">✕</button></div></div>`).join(''); }
+function renderLsLog(g){ const log=(g.lspayments)||[]; document.getElementById('ls-log').innerHTML=log.length===0?`<div style="color:var(--text3);font-size:13px;padding:6px">Henüz kayıt yok</div>`:log.map((p,i)=>`<div class="pm-entry"><div><strong>${p.amt.toLocaleString('tr-TR')}₺</strong> <span class="pbadge ${p.pay==='nakit'?'p-cash':'p-card'}" style="font-size:10px">${p.pay==='nakit'?'💵':'💳'}</span></div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--text2)">${p.date}${p.note?' · '+p.note:''}</span><button class="pm-del" onclick="delLsPay(${g.id},${i})">✕</button></div></div>`).join(''); }
 
-async function addLsPay(){ const amt=parseInt(document.getElementById('ls-amt').value)||0; const date=document.getElementById('ls-date').value; const note=document.getElementById('ls-note').value.trim(); if(!amt){ alert('Tutar girin.'); return; } const g=guests.find(x=>x.id===lsGuestId); if(!g) return; const pays=(g.lspays||[]); pays.push({amt,pay:lsPay,date:toTR(date),note}); await sbUpdate('guests',g.id,{lspays:pays}); g.lspays=pays; renderLsLog(g); renderLongStay(); document.getElementById('ls-amt').value=''; document.getElementById('ls-note').value=''; toast('✓ Ödeme kaydedildi'); }
+async function addLsPay(){ const amt=parseInt(document.getElementById('ls-amt').value)||0; const date=document.getElementById('ls-date').value; const note=document.getElementById('ls-note').value.trim(); if(!amt){ alert('Tutar girin.'); return; } const g=guests.find(x=>x.id===lsGuestId); if(!g) return; const pays=(g.lspayments||[]); pays.push({amt,pay:lsPay,date:toTR(date),note}); await sbUpdate('guests',g.id,{lspayments:pays}); g.lspayments=pays; renderLsLog(g); renderLongStay(); document.getElementById('ls-amt').value=''; document.getElementById('ls-note').value=''; toast('✓ Ödeme kaydedildi'); }
 
-async function delLsPay(gid,idx){ const g=guests.find(x=>x.id===gid); if(!g||!g.lspays) return; g.lspays.splice(idx,1); await sbUpdate('guests',g.id,{lspays:g.lspays}); renderLsLog(g); renderLongStay(); toast('Ödeme silindi'); }
+async function delLsPay(gid,idx){ const g=guests.find(x=>x.id===gid); if(!g||!g.lspayments) return; g.lspayments.splice(idx,1); await sbUpdate('guests',g.id,{lspayments:g.lspayments}); renderLsLog(g); renderLongStay(); toast('Ödeme silindi'); }
 
 // ═══════════════════════════════════════
 // TODAY
