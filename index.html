@@ -26,16 +26,12 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);overflow:hidden;}
 .app{display:flex;flex-direction:column;height:100vh;height:100dvh;}
-
-/* Topbar */
 .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:calc(var(--st)+12px) 16px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,0.05);}
 .brand{display:flex;align-items:center;gap:9px;}
 .brand-icon{width:32px;height:32px;border-radius:8px;background:var(--accent-dim);border:1.5px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;}
 .brand-name{font-size:15px;font-weight:700;color:var(--text);}
 .brand-date{font-size:11px;color:var(--text3);}
 .btn-new{background:var(--accent);color:#fff;border:none;border-radius:var(--rs);padding:8px 14px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;}
-
-/* Stats */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
 .stat{border-radius:var(--rs);padding:9px 6px;text-align:center;border:1px solid var(--border);background:var(--surface2);}
 .stat.red{background:#c0242a;border-color:#9e0f0f;}
@@ -43,26 +39,18 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .sv{font-size:22px;font-weight:700;line-height:1;font-family:'DM Mono',monospace;color:var(--text);}
 .sv.gold{color:var(--accent);}
 .sl{font-size:9px;color:var(--text2);margin-top:3px;font-weight:600;}
-
-/* Tabs */
 .tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0;scrollbar-width:none;}
 .tabs::-webkit-scrollbar{display:none;}
 .tab{padding:11px 15px;font-size:13px;font-weight:500;color:var(--text2);white-space:nowrap;cursor:pointer;border-bottom:2.5px solid transparent;font-family:'DM Sans',sans-serif;}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
-
-/* Content */
 .content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .pane{display:none;padding-bottom:calc(var(--sb)+70px);}
 .pane.active{display:block;}
-
-/* Toolbar */
 .toolbar{padding:11px 14px;display:flex;gap:8px;}
 .search{flex:1;padding:9px 11px;background:var(--surface);border:1px solid var(--border-md);border-radius:var(--rs);font-size:14px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;}
 .search::placeholder{color:var(--text3);}
 .search:focus{border-color:var(--accent);}
 .fsel{padding:9px 8px;background:var(--surface);border:1px solid var(--border-md);border-radius:var(--rs);font-size:13px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;}
-
-/* Cards */
 .glist{padding:0 14px;display:flex;flex-direction:column;gap:9px;}
 .gcard{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:12px 13px;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
 .gtop{display:flex;align-items:center;gap:10px;}
@@ -74,8 +62,6 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .card-btm{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
 .card-actions{display:flex;gap:6px;margin-top:9px;padding-top:9px;border-top:1px solid var(--border);}
 .pay-amt{font-size:15px;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent);}
-
-/* Badges */
 .badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
 .b-stay{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);}
 .b-out{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
@@ -84,8 +70,6 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .p-cash{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
 .p-card{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);}
 .p-pend{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
-
-/* Buttons */
 .abtn{padding:7px 11px;border-radius:var(--rs);font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;border:none;white-space:nowrap;flex:1;text-align:center;}
 .a-edit{background:var(--surface2);color:var(--text2);border:1px solid var(--border-md);}
 .a-in{background:var(--green);color:#fff;}
@@ -93,10 +77,8 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .a-del{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
 .a-ext{background:var(--blue);color:#fff;}
 .a-blk{background:#1a1a1a;color:#fff;}
-
-/* Room grid */
 .floors{padding:10px 14px;display:flex;flex-direction:column;gap:14px;}
-.floor-wrap{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:13px;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
+.floor-wrap{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:13px;}
 .floor-lbl{font-size:11px;font-weight:700;color:var(--text);margin-bottom:9px;text-transform:uppercase;letter-spacing:.07em;}
 .floor-lbl span{font-weight:500;color:var(--text2);text-transform:none;}
 .rgrid{display:grid;gap:5px;}
@@ -107,45 +89,31 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .r-empty{background:#c8f5d8;color:#0a6b2e;border-color:#22b855;}
 .r-occ{background:#ffd0d0;color:#9e0f0f;border-color:#e83333;box-shadow:0 1px 4px rgba(232,51,51,.2);}
 .r-co{background:#ffe9b0;color:#8a5000;border-color:#e8a020;}
-.r-clean{background:#1a1a1a;color:#fff;border-color:#000;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.r-clean{background:#1a1a1a;color:#fff;border-color:#000;}
 .legend{display:flex;flex-wrap:wrap;gap:10px;padding:9px 14px 4px;}
 .leg{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--text2);}
 .ldot{width:12px;height:12px;border-radius:3px;border:1.5px solid;}
-
-/* Section header */
 .sec-hdr{padding:12px 14px 5px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;}
-
-/* Payment summary */
 .psums{padding:0 14px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
-.psum{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:12px 9px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.psum{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:12px 9px;text-align:center;}
 .psum-val{font-size:15px;font-weight:700;font-family:'DM Mono',monospace;}
 .psum-lbl{font-size:10px;color:var(--text2);margin-top:4px;font-weight:500;}
-
-/* Ops */
 .olist{padding:0 14px;display:flex;flex-direction:column;gap:8px;}
 .ocard{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:12px 13px;display:flex;align-items:center;gap:11px;}
 .oicon{width:36px;height:36px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.oi-in{background:var(--green-bg);}
-.oi-out{background:var(--red-bg);}
+.oi-in{background:var(--green-bg);} .oi-out{background:var(--red-bg);}
 .oinfo{flex:1;min-width:0;}
-.oname{font-size:14px;font-weight:600;}
-.odet{font-size:12px;color:var(--text2);margin-top:2px;}
+.oname{font-size:14px;font-weight:600;} .odet{font-size:12px;color:var(--text2);margin-top:2px;}
 .oright{text-align:right;flex-shrink:0;}
-.otime{font-size:13px;font-weight:600;font-family:'DM Mono',monospace;}
-.os-done{font-size:11px;color:var(--green);font-weight:600;}
-.os-pend{font-size:11px;color:var(--amber);font-weight:600;}
-
-/* Long stay */
+.os-done{font-size:11px;color:var(--green);font-weight:600;} .os-pend{font-size:11px;color:var(--amber);font-weight:600;}
 .ls-badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;background:#1a1a1a;color:#fff;}
 .ls-bar{background:var(--surface2);border-radius:4px;height:7px;overflow:hidden;margin-top:5px;}
 .ls-bar-fill{height:100%;border-radius:4px;}
 .pm-log{display:flex;flex-direction:column;gap:5px;margin-top:6px;max-height:150px;overflow-y:auto;}
 .pm-entry{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;background:var(--surface2);border-radius:var(--rs);font-size:12px;}
 .pm-del{background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;}
-
-/* Rezervasyon */
 .rez-alert{display:flex;align-items:flex-start;gap:9px;background:#fff3d6;border:1.5px solid #e8a020;border-radius:var(--rs);padding:11px 13px;margin:10px 14px 0;font-size:13px;color:#7a4500;}
-.rez-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:12px 13px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.rez-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:12px 13px;}
 .rez-card.rc-soon{border-left:4px solid var(--blue);}
 .rez-card.rc-conflict{border-left:4px solid #e8a020;background:#fffbf0;}
 .rez-card.rc-future{border-left:4px solid var(--green);}
@@ -153,21 +121,15 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .rd-today{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
 .rd-soon{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);}
 .rd-future{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
-
-/* Extend stay */
 .ext-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:9px 0;}
 .ext-opt{padding:11px 5px;border-radius:var(--rs);border:1.5px solid var(--border-md);background:var(--surface2);font-size:13px;font-weight:600;cursor:pointer;text-align:center;color:var(--text2);font-family:'DM Sans',sans-serif;}
 .ext-opt.sel{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
 .info-box{background:var(--surface2);border-radius:var(--rs);padding:11px;border:1px solid var(--border);font-size:13px;line-height:1.8;color:var(--text2);margin-top:8px;}
 .info-box strong{color:var(--text);}
-
-/* Room detail */
 .rm-chips{display:flex;flex-wrap:wrap;gap:6px;margin:7px 0 12px;}
 .rm-chip{padding:6px 11px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border-md);background:var(--surface2);color:var(--text2);}
 .rm-chip.sel{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
 .rm-chip.sel-g{background:var(--green);color:#fff;border-color:var(--green);}
-
-/* Modals */
 .mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.48);z-index:200;align-items:flex-end;justify-content:center;}
 .mbg.open{display:flex;}
 .msheet{background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);width:100%;max-width:520px;padding:18px 18px calc(18px + var(--sb));max-height:92vh;overflow-y:auto;animation:su .25s ease-out;}
@@ -187,13 +149,10 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .mcancel{flex:1;padding:13px;background:var(--surface2);border:1px solid var(--border-md);border-radius:var(--rs);font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--text);}
 .mconfirm{flex:2;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .mdanger{flex:2;padding:13px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
-
-/* Toast */
 .toast{position:fixed;bottom:calc(var(--sb)+75px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--text);color:var(--surface);border-radius:var(--rs);padding:10px 18px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;z-index:500;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* Install */
-.ibanner{display:none;position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;background:var(--surface);border:1px solid var(--accent);border-radius:var(--r);padding:11px 13px;align-items:center;gap:9px;box-shadow:0 4px 14px rgba(0,0,0,.1);}
+.loading{text-align:center;padding:50px;color:var(--text3);font-size:14px;}
+.ibanner{display:none;position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;background:var(--surface);border:1px solid var(--accent);border-radius:var(--r);padding:11px 13px;align-items:center;gap:9px;}
 .ibanner.show{display:flex;}
 .itext{flex:1;font-size:13px;line-height:1.4;color:var(--text);}
 .ibtn{background:var(--accent);color:#fff;border:none;border-radius:var(--rs);padding:7px 11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
@@ -202,7 +161,6 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 </head>
 <body>
 <div class="app">
-
   <div class="topbar">
     <div class="brand">
       <div class="brand-icon">🏨</div>
@@ -213,14 +171,12 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
     </div>
     <button class="btn-new" onclick="openCI()">+ Check-in</button>
   </div>
-
   <div class="stats">
     <div class="stat red"><div class="sv" id="s-occ">0</div><div class="sl">Dolu Oda</div></div>
     <div class="stat"><div class="sv" style="color:var(--green)" id="s-empty">0</div><div class="sl">Boş Oda</div></div>
     <div class="stat"><div class="sv" id="s-co">0</div><div class="sl">Çıkış Bugün</div></div>
     <div class="stat"><div class="sv gold" id="s-rev">0₺</div><div class="sl">Gelir</div></div>
   </div>
-
   <div class="tabs">
     <div class="tab active" onclick="switchTab('guests',this)">Misafirler</div>
     <div class="tab" onclick="switchTab('rooms',this)">Odalar</div>
@@ -229,10 +185,7 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
     <div class="tab" onclick="switchTab('longstay',this)">🏠 Uzun Konaklama</div>
     <div class="tab" onclick="switchTab('today',this)">Bugün</div>
   </div>
-
   <div class="content">
-
-    <!-- Misafirler -->
     <div class="pane active" id="pane-guests">
       <div class="toolbar">
         <input class="search" type="search" id="search-input" placeholder="Misafir veya oda ara..." oninput="filterGuests(this.value)">
@@ -243,10 +196,8 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
           <option value="Check-out">Check-out</option>
         </select>
       </div>
-      <div class="glist" id="guest-list"></div>
+      <div class="glist" id="guest-list"><div class="loading">⏳ Yükleniyor...</div></div>
     </div>
-
-    <!-- Odalar -->
     <div class="pane" id="pane-rooms">
       <div class="legend">
         <div class="leg"><div class="ldot" style="background:#c8f5d8;border-color:#22b855"></div>Boş</div>
@@ -256,16 +207,12 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
       </div>
       <div class="floors" id="floors"></div>
     </div>
-
-    <!-- Ödemeler -->
     <div class="pane" id="pane-pay">
       <div class="sec-hdr">Özet</div>
       <div class="psums" id="pay-sums"></div>
       <div class="sec-hdr" style="margin-top:6px">Misafir Ödemeleri</div>
       <div class="glist" id="pay-list"></div>
     </div>
-
-    <!-- Rezervasyon -->
     <div class="pane" id="pane-rez">
       <div id="rez-alerts"></div>
       <div class="toolbar" style="padding-bottom:0">
@@ -279,25 +226,20 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
       <div class="sec-hdr" id="rez-hdr">Rezervasyonlar</div>
       <div class="glist" id="rez-list"></div>
     </div>
-
-    <!-- Uzun Konaklama -->
     <div class="pane" id="pane-longstay">
-      <div class="sec-hdr">Uzun Konaklamalı Misafirler <span id="ls-count" style="font-weight:400;color:var(--text3)"></span></div>
+      <div class="sec-hdr">Uzun Konaklamalı <span id="ls-count" style="font-weight:400;color:var(--text3)"></span></div>
       <div class="psums" id="ls-sums"></div>
       <div class="sec-hdr" style="margin-top:4px">Detaylar</div>
       <div class="glist" id="ls-list"></div>
     </div>
-
-    <!-- Bugün -->
     <div class="pane" id="pane-today">
       <div class="sec-hdr">Bugünkü İşlemler</div>
       <div class="olist" id="ops-list"></div>
     </div>
-
   </div>
 </div>
 
-<!-- Check-in / Düzenle Modal -->
+<!-- Check-in Modal -->
 <div class="mbg" id="modal-ci">
   <div class="msheet">
     <div class="mhandle"></div>
@@ -379,19 +321,6 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
   </div>
 </div>
 
-<!-- Oda Detay Modal -->
-<div class="mbg" id="modal-room">
-  <div class="msheet">
-    <div class="mhandle"></div>
-    <div class="mtitle" id="rm-title">Oda Detayı</div>
-    <div id="rm-content"></div>
-    <div class="mactions">
-      <button class="mcancel" onclick="closeRoom()">Kapat</button>
-      <button class="mconfirm" onclick="saveRoom()">Kaydet</button>
-    </div>
-  </div>
-</div>
-
 <!-- Rezervasyon Modal -->
 <div class="mbg" id="modal-rez">
   <div class="msheet">
@@ -403,7 +332,7 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
     </div>
     <div class="frow">
       <div class="fgrp"><label class="flbl">Telefon</label><input class="finput" type="tel" id="rz-phone" placeholder="05xx xxx xx xx"></div>
-      <div class="fgrp"><label class="flbl">Kişi Sayısı</label><input class="finput" type="number" id="rz-persons" placeholder="2" min="1"></div>
+      <div class="fgrp"><label class="flbl">Kişi Sayısı</label><input class="finput" type="number" id="rz-persons" placeholder="2"></div>
     </div>
     <div class="frow">
       <div class="fgrp"><label class="flbl">Oda No</label><select class="finput" id="rz-room"><option value="">Seç...</option></select></div>
@@ -413,7 +342,7 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
       <div class="fgrp"><label class="flbl">Giriş Tarihi</label><input class="finput" type="date" id="rz-cin" oninput="checkRezConflict()"></div>
       <div class="fgrp"><label class="flbl">Çıkış Tarihi</label><input class="finput" type="date" id="rz-cout" oninput="checkRezConflict()"></div>
     </div>
-    <div id="rz-warn" style="display:none" class="rez-alert"><div>⚠️ <span id="rz-warn-txt"></span> Yine de kaydedebilirsiniz.</div></div>
+    <div id="rz-warn" style="display:none" class="rez-alert"><div>⚠️ <span id="rz-warn-txt"></span></div></div>
     <div class="fgrp"><label class="flbl">Not</label><input class="finput" type="text" id="rz-note" placeholder="Özel istek..."></div>
     <div class="mactions">
       <button class="mcancel" onclick="closeRezModal()">İptal</button>
@@ -456,7 +385,35 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 
 <script>
 // ═══════════════════════════════════════
-// FLOORS
+// SUPABASE
+// ═══════════════════════════════════════
+const SB_URL = 'https://pjutaztpsoqwfnuuihfx.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqdXRhenRwc29xd2ZudXVpaGZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NDEyNjUsImV4cCI6MjA5MDUxNzI2NX0.Yu9jBlhUv5rnCcQbTPgl2IdlelIdRz3mBKjfO4GUSXs';
+const H = {'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
+
+async function sbSelect(table, query=''){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${query}`, {headers:H});
+  if(!r.ok) return [];
+  return await r.json();
+}
+async function sbInsert(table, data){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {method:'POST', headers:H, body:JSON.stringify(data)});
+  if(!r.ok){ const t=await r.text(); console.error(t); return null; }
+  const res = await r.json();
+  return Array.isArray(res) ? res[0] : res;
+}
+async function sbUpdate(table, id, data){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {method:'PATCH', headers:H, body:JSON.stringify(data)});
+  if(!r.ok){ const t=await r.text(); console.error(t); return false; }
+  return true;
+}
+async function sbDelete(table, id){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`, {method:'DELETE', headers:H});
+  return r.ok;
+}
+
+// ═══════════════════════════════════════
+// FLOORS & STATE
 // ═══════════════════════════════════════
 const FLOORS = {
   1: Array.from({length:24},(_,i)=>String(101+i)),
@@ -466,24 +423,12 @@ const FLOORS = {
 const ALL_ROOMS = [...FLOORS[1],...FLOORS[2],...FLOORS[3]];
 const CLEAN_ROOMS = new Set(['103','201','224','310']);
 
-// ═══════════════════════════════════════
-// STORAGE
-// ═══════════════════════════════════════
-function lsGet(key, def){ try{ const v=localStorage.getItem(key); return v ? JSON.parse(v) : def; }catch(e){ return def; } }
-function lsSet(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
-
-// ═══════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════
-let guests = lsGet('dg_guests', []);
-let rez    = lsGet('dg_rez', []);
-let rooms  = lsGet('dg_rooms', {});
-let nextGId = guests.reduce((m,g)=>Math.max(m,g.id),0)+1;
-let nextRId = rez.reduce((m,r)=>Math.max(m,r.id),0)+1;
-
+let guests = [];
+let rez = [];
+let rooms = {};
 let ciPay='nakit', editId=null, delId=null;
-let extId=null, editRezId=null, lsGuestId=null, lsPay='nakit', editRoomId=null;
-let rmType='Çift Kişilik', rmView='Bahçe', rmAc=true, rmBal=false, rmTV=true, rmSafe=false, rmMbar=false;
+let extId=null, editRezId=null, lsGuestId=null, lsPay='nakit';
+let rmType='Çift Kişilik', rmView='Bahçe', rmAc=true, rmBal=false, rmTV=true, rmSafe=false, rmMbar=false, editRoomId=null;
 
 // ═══════════════════════════════════════
 // HELPERS
@@ -497,10 +442,10 @@ const toISO = d => { if(!d||d==='—') return ''; const p=d.split('.'); return p
 const toTR  = d => { if(!d) return '—'; const p=d.split('-'); return p.length===3?`${p[2]}.${p[1]}.${p[0]}`:'—'; };
 const fmtBday = d => { try{ return new Date(d).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return d||''; } };
 const dateObj = d => { if(!d||d==='—') return null; const p=d.includes('.')?d.split('.'):d.split('-'); return d.includes('.')?new Date(+p[2],+p[1]-1,+p[0]):new Date(+p[0],+p[1]-1,+p[2]); };
-const daysDiff= d => { const o=dateObj(d); if(!o) return 999; return Math.round((o-new Date())/86400000); };
-const stayDays= g => { const o=dateObj(g.checkin); if(!o) return 0; return Math.floor((new Date()-o)/86400000); };
+const daysDiff = d => { const o=dateObj(d); if(!o) return 999; return Math.round((o-new Date())/86400000); };
+const stayDays = g => { const o=dateObj(g.checkin); if(!o) return 0; return Math.floor((new Date()-o)/86400000); };
 
-function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2200); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 
 document.getElementById('today-date').textContent = new Date().toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
@@ -520,14 +465,15 @@ function updateStats(){
 // ═══════════════════════════════════════
 // TABS
 // ═══════════════════════════════════════
-function switchTab(tab, el){
+async function switchTab(tab, el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); el.classList.add('active');
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active')); document.getElementById('pane-'+tab).classList.add('active');
-  if(tab==='rooms')    renderRooms();
-  if(tab==='pay')      renderPay();
-  if(tab==='rez')      renderRez();
-  if(tab==='longstay') renderLongStay();
-  if(tab==='today')    renderToday();
+  if(tab==='guests'){ guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); }
+  if(tab==='rooms'){ guests=await sbSelect('guests','order=id.desc'); renderRooms(); }
+  if(tab==='pay'){ guests=await sbSelect('guests','order=id.desc'); renderPay(); }
+  if(tab==='rez'){ rez=await sbSelect('rezervasyonlar','order=id.asc'); renderRez(); }
+  if(tab==='longstay'){ guests=await sbSelect('guests','order=id.desc'); renderLongStay(); }
+  if(tab==='today'){ guests=await sbSelect('guests','order=id.desc'); renderToday(); }
 }
 
 // ═══════════════════════════════════════
@@ -535,7 +481,7 @@ function switchTab(tab, el){
 // ═══════════════════════════════════════
 function renderGuests(list){
   document.getElementById('guest-list').innerHTML = list.length===0
-    ? `<div style="text-align:center;padding:50px;color:var(--text3);font-size:14px">Misafir bulunamadı</div>`
+    ? `<div class="loading">Misafir bulunamadı</div>`
     : list.map(g=>`
     <div class="gcard">
       <div class="gtop">
@@ -572,7 +518,6 @@ function filterGuests(q){
   }));
 }
 
-// ── Room select fill ──
 function fillRoomSel(selId, currentRoom){
   const taken = new Set(guests.filter(g=>g.status!=='Check-out'&&g.id!==editId).map(g=>g.room));
   const sel = document.getElementById(selId);
@@ -590,31 +535,24 @@ function fillRoomSel(selId, currentRoom){
   });
 }
 
-// ── Pay selector ──
 function selPay(t){
   ciPay=t;
-  ['cash','card','pend'].forEach(k=>{
-    const map={cash:'nakit',card:'kart',pend:'beklemede'};
-    document.getElementById('ci-'+k).classList.toggle('sel',map[k]===t);
-  });
+  ['cash','card','pend'].forEach(k=>{ const m={cash:'nakit',card:'kart',pend:'beklemede'}; document.getElementById('ci-'+k).classList.toggle('sel',m[k]===t); });
 }
 
-// ── Open CI ──
 function openCI(){
   editId=null;
   document.getElementById('ci-title').textContent='Yeni Check-in';
   document.getElementById('ci-btn').textContent='Check-in Yap';
   ['f-name','f-surn','f-bday','f-id','f-amt','f-cin','f-cout'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-status').value='Konaklamada';
-  selPay('nakit'); fillRoomSel('f-room', null);
+  selPay('nakit'); fillRoomSel('f-room',null);
   document.getElementById('modal-ci').classList.add('open');
   setTimeout(()=>document.getElementById('f-name').focus(),300);
 }
 
-// ── Open Edit ──
 function openEdit(id){
-  editId=id;
-  const g=guests.find(x=>x.id===id); if(!g) return;
+  editId=id; const g=guests.find(x=>x.id===id); if(!g) return;
   document.getElementById('ci-title').textContent=g.name+' — Düzenle';
   document.getElementById('ci-btn').textContent='Güncelle';
   const p=g.name.split(' ');
@@ -626,14 +564,14 @@ function openEdit(id){
   document.getElementById('f-status').value=g.status||'Konaklamada';
   document.getElementById('f-cin').value=toISO(g.checkin);
   document.getElementById('f-cout').value=toISO(g.checkout);
-  selPay(g.pay||'nakit'); fillRoomSel('f-room', g.room);
+  selPay(g.pay||'nakit'); fillRoomSel('f-room',g.room);
   document.getElementById('modal-ci').classList.add('open');
 }
 
 function closeCI(){ document.getElementById('modal-ci').classList.remove('open'); editId=null; }
 document.getElementById('modal-ci').addEventListener('click',e=>{ if(e.target.id==='modal-ci') closeCI(); });
 
-function saveGuest(){
+async function saveGuest(){
   const name=document.getElementById('f-name').value.trim();
   const surn=document.getElementById('f-surn').value.trim();
   const room=document.getElementById('f-room').value;
@@ -646,32 +584,30 @@ function saveGuest(){
   if(!name||!room){ alert('Ad ve oda zorunludur.'); return; }
   const fullName=`${name} ${surn}`.trim();
   const cinTR=cin?toTR(cin):new Date().toLocaleDateString('tr-TR');
-  const coutTR=toTR(cout);
+  const data={name:fullName,room,checkin:cinTR,checkout:toTR(cout),amt,pay:ciPay,status,idno,bday};
+  document.getElementById('ci-btn').textContent='⏳';
   if(editId!==null){
-    const i=guests.findIndex(x=>x.id===editId);
-    if(i>-1) guests[i]={...guests[i], name:fullName, room, checkin:cinTR, checkout:coutTR, amt, pay:ciPay, status, idno, bday};
+    await sbUpdate('guests',editId,data);
     toast('✓ Güncellendi');
   } else {
-    guests.unshift({id:nextGId++, name:fullName, room, checkin:cinTR, checkout:coutTR, amt, pay:ciPay, status, idno, bday});
+    await sbInsert('guests',data);
     toast('✓ Check-in yapıldı');
   }
-  lsSet('dg_guests', guests);
+  guests=await sbSelect('guests','order=id.desc');
   updateStats(); filterGuests(''); closeCI();
 }
 
-// ── Delete ──
 function openDel(id){ delId=id; const g=guests.find(x=>x.id===id); document.getElementById('del-name').textContent=g?g.name:''; document.getElementById('modal-del').classList.add('open'); }
 function closeDel(){ document.getElementById('modal-del').classList.remove('open'); delId=null; }
 document.getElementById('modal-del').addEventListener('click',e=>{ if(e.target.id==='modal-del') closeDel(); });
-function confirmDel(){
+async function confirmDel(){
+  await sbDelete('guests',delId);
   guests=guests.filter(g=>g.id!==delId);
-  lsSet('dg_guests', guests);
   updateStats(); filterGuests(''); closeDel(); toast('Misafir silindi');
 }
 
-// ── Quick actions ──
-function quickCI(id){ const g=guests.find(x=>x.id===id); if(g){g.status='Konaklamada';lsSet('dg_guests',guests);updateStats();filterGuests('');toast('✓ Check-in yapıldı');} }
-function quickCO(id){ const g=guests.find(x=>x.id===id); if(g){g.status='Check-out';lsSet('dg_guests',guests);updateStats();filterGuests('');toast('✓ Check-out yapıldı');} }
+async function quickCI(id){ await sbUpdate('guests',id,{status:'Konaklamada'}); guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); toast('✓ Check-in yapıldı'); }
+async function quickCO(id){ await sbUpdate('guests',id,{status:'Check-out'}); guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); toast('✓ Check-out yapıldı'); }
 
 // ═══════════════════════════════════════
 // ROOMS
@@ -679,12 +615,10 @@ function quickCO(id){ const g=guests.find(x=>x.id===id); if(g){g.status='Check-o
 function renderRooms(){
   const occ  = new Set(guests.filter(g=>g.status==='Konaklamada').map(g=>g.room));
   const coday= new Set(guests.filter(g=>g.status==='Check-out').map(g=>g.room));
-  const occN = occ.size;
-  const empN = ALL_ROOMS.filter(r=>!occ.has(r)).length;
-  document.getElementById('floors').innerHTML =
+  document.getElementById('floors').innerHTML=
     `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 0 4px">
-      <div class="psum"><div class="psum-val" style="color:var(--red)">${occN}</div><div class="psum-lbl">🔴 Dolu</div></div>
-      <div class="psum"><div class="psum-val" style="color:var(--green)">${empN}</div><div class="psum-lbl">🟢 Boş</div></div>
+      <div class="psum"><div class="psum-val" style="color:var(--red)">${occ.size}</div><div class="psum-lbl">🔴 Dolu</div></div>
+      <div class="psum"><div class="psum-val" style="color:var(--green)">${ALL_ROOMS.filter(r=>!occ.has(r)).length}</div><div class="psum-lbl">🟢 Boş</div></div>
     </div>`
     +[1,2,3].map(f=>`
     <div class="floor-wrap f${f}">
@@ -695,73 +629,31 @@ function renderRooms(){
           if(occ.has(r)) c='r-occ';
           else if(coday.has(r)) c='r-co';
           else if(CLEAN_ROOMS.has(r)) c='r-clean';
-          const ri=getRoomInfo(r);
-          return `<div class="rcell ${c}" onclick="openRoomModal('${r}')" title="${ri.type}·${ri.sqm}m²·${ri.view}">${r}</div>`;
+          return `<div class="rcell ${c}" onclick="openRoomModal('${r}')">${r}</div>`;
         }).join('')}
       </div>
     </div>`).join('');
 }
 
-// ── Room info ──
 function getRoomInfo(r){
   const d=rooms[r]||{};
   const idx=(parseInt(r)%100)-1;
   return {
-    type: d.type||(['Tek Kişilik','Çift Kişilik','2 Tek Yataklı','Çift Kişilik','Tek Kişilik','Suite'][idx%6]),
-    view: d.view||(['Bahçe','Şehir','Havuz','Bahçe','Şehir','Bahçe'][idx%6]),
-    sqm:  d.sqm||([18,22,22,24,18,32][idx%6]),
-    ac:   d.ac!==undefined?d.ac:idx%3!==2,
-    bal:  d.bal||false, tv:d.tv!==undefined?d.tv:true,
-    safe: d.safe||parseInt(r)>200, mbar:d.mbar||parseInt(r)>300
+    type:d.type||['Tek Kişilik','Çift Kişilik','2 Tek Yataklı','Çift Kişilik'][idx%4],
+    view:d.view||['Bahçe','Şehir','Havuz','Bahçe'][idx%4],
+    sqm:d.sqm||[18,22,22,24][idx%4],
+    ac:d.ac!==undefined?d.ac:true, bal:d.bal||false, tv:d.tv!==undefined?d.tv:true,
+    safe:d.safe||false, mbar:d.mbar||false
   };
 }
 
 function openRoomModal(r){
-  editRoomId=r;
-  const ri=getRoomInfo(r);
+  editRoomId=r; const ri=getRoomInfo(r);
   rmType=ri.type; rmView=ri.view; rmAc=ri.ac; rmBal=ri.bal; rmTV=ri.tv; rmSafe=ri.safe; rmMbar=ri.mbar;
-  document.getElementById('rm-title').textContent='Oda '+r+' — Özellikler';
-  document.getElementById('rm-content').innerHTML=`
-    <div class="fgrp"><label class="flbl">Oda Tipi</label>
-      <div class="rm-chips" id="rm-types">
-        ${['Tek Kişilik','Çift Kişilik','2 Tek Yataklı','Suite'].map(t=>`<div class="rm-chip${rmType===t?' sel':''}" onclick="selRmType('${t}',this)">${t}</div>`).join('')}
-      </div>
-    </div>
-    <div class="frow">
-      <div class="fgrp" style="margin:0"><label class="flbl">Metrekare</label><input class="finput" type="number" id="rm-sqm" value="${ri.sqm}"></div>
-      <div class="fgrp" style="margin:0"><label class="flbl">Manzara</label>
-        <select class="finput" id="rm-view">
-          ${['Bahçe','Şehir','Havuz','Dağ','Deniz','İç Avlu'].map(v=>`<option${ri.view===v?' selected':''}>${v}</option>`).join('')}
-        </select>
-      </div>
-    </div>
-    <div class="fgrp" style="margin-top:10px"><label class="flbl">Özellikler</label>
-      <div class="rm-chips">
-        <div class="rm-chip${rmAc?' sel-g':''}" id="ft-ac" onclick="togFeat('ac','ft-ac')">❄️ Klima</div>
-        <div class="rm-chip${rmBal?' sel-g':''}" id="ft-bal" onclick="togFeat('bal','ft-bal')">🌿 Balkon</div>
-        <div class="rm-chip${rmTV?' sel-g':''}" id="ft-tv" onclick="togFeat('tv','ft-tv')">📺 TV</div>
-        <div class="rm-chip${rmSafe?' sel-g':''}" id="ft-safe" onclick="togFeat('safe','ft-safe')">🔐 Kasa</div>
-        <div class="rm-chip${rmMbar?' sel-g':''}" id="ft-mbar" onclick="togFeat('mbar','ft-mbar')">🍷 Minibar</div>
-      </div>
-    </div>
-    ${(()=>{const g=guests.find(x=>x.room===r&&x.status==='Konaklamada'); return g?`<div class="info-box" style="margin-top:8px"><strong>${g.name}</strong> konaklamada · ${stayDays(g)} gün · <button class="abtn a-ext" style="flex:0;padding:4px 10px;font-size:12px;display:inline-block" onclick="closeRoom();openEdit(${g.id})">Düzenle</button></div>`:''})()}`;
-  document.getElementById('modal-room').classList.add('open');
-}
-
-function selRmType(t,el){ rmType=t; document.querySelectorAll('#rm-types .rm-chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
-function togFeat(f,eid){
-  if(f==='ac') rmAc=!rmAc;
-  if(f==='bal') rmBal=!rmBal;
-  if(f==='tv') rmTV=!rmTV;
-  if(f==='safe') rmSafe=!rmSafe;
-  if(f==='mbar') rmMbar=!rmMbar;
-  const el=document.getElementById(eid); el.classList.toggle('sel-g'); el.classList.remove('sel');
-}
-function closeRoom(){ document.getElementById('modal-room').classList.remove('open'); editRoomId=null; }
-document.getElementById('modal-room').addEventListener('click',e=>{ if(e.target.id==='modal-room') closeRoom(); });
-function saveRoom(){
-  rooms[editRoomId]={type:rmType,view:document.getElementById('rm-view').value,sqm:parseInt(document.getElementById('rm-sqm').value)||20,ac:rmAc,bal:rmBal,tv:rmTV,safe:rmSafe,mbar:rmMbar};
-  lsSet('dg_rooms',rooms); toast('✓ Oda bilgileri kaydedildi'); closeRoom(); renderRooms();
+  // Simple info display - no edit modal for now, just show guest info
+  const g=guests.find(x=>x.room===r&&x.status==='Konaklamada');
+  if(g){ openEdit(g.id); }
+  else { toast('Oda '+r+' boş'); }
 }
 
 // ═══════════════════════════════════════
@@ -807,171 +699,66 @@ function openExt(id){
 }
 function closeExt(){ document.getElementById('modal-ext').classList.remove('open'); extId=null; }
 document.getElementById('modal-ext').addEventListener('click',e=>{ if(e.target.id==='modal-ext') closeExt(); });
-
 function selExt(days,el){
   document.querySelectorAll('.ext-opt').forEach(e=>e.classList.remove('sel')); el.classList.add('sel');
   const g=guests.find(x=>x.id===extId); if(!g) return;
   const d=dateObj(g.checkout); d.setDate(d.getDate()+days);
-  const iso=d.toISOString().split('T')[0];
-  document.getElementById('ext-date').value=iso; showExtPrev(g,toTR(iso));
+  document.getElementById('ext-date').value=d.toISOString().split('T')[0];
+  showExtPrev(g,toTR(d.toISOString().split('T')[0]));
 }
 function onExtDate(){ const g=guests.find(x=>x.id===extId); if(!g) return; document.querySelectorAll('.ext-opt').forEach(e=>e.classList.remove('sel')); const v=document.getElementById('ext-date').value; if(v) showExtPrev(g,toTR(v)); }
-function showExtPrev(g,newCO){
-  const o=dateObj(g.checkout); const n=dateObj(newCO); if(!n||n<=o){ document.getElementById('ext-preview').style.display='none'; return; }
-  const extra=Math.round((n-o)/86400000);
-  const prev=document.getElementById('ext-preview'); prev.style.display='block';
-  prev.innerHTML=`Yeni çıkış: <strong>${newCO}</strong> · +<strong>${extra} gece</strong>`;
-}
-function confirmExt(){
+function showExtPrev(g,newCO){ const o=dateObj(g.checkout); const n=dateObj(newCO); if(!n||n<=o){ document.getElementById('ext-preview').style.display='none'; return; } const extra=Math.round((n-o)/86400000); const prev=document.getElementById('ext-preview'); prev.style.display='block'; prev.innerHTML=`Yeni çıkış: <strong>${newCO}</strong> · +<strong>${extra} gece</strong>`; }
+async function confirmExt(){
   const g=guests.find(x=>x.id===extId); if(!g) return;
-  const newISO=document.getElementById('ext-date').value;
-  const fee=parseInt(document.getElementById('ext-fee').value)||0;
+  const newISO=document.getElementById('ext-date').value; const fee=parseInt(document.getElementById('ext-fee').value)||0;
   if(!newISO){ alert('Tarih seçin.'); return; }
   const newCO=toTR(newISO); const o=dateObj(g.checkout); const n=dateObj(newCO);
   if(!n||n<=o){ alert('Yeni tarih mevcut çıkıştan sonra olmalı.'); return; }
-  g.checkout=newCO; if(fee>0) g.amt=(g.amt||0)+fee;
-  lsSet('dg_guests',guests); updateStats(); filterGuests(''); closeExt(); toast('✓ Konaklama uzatıldı → '+newCO);
+  const updates={checkout:newCO}; if(fee>0) updates.amt=(g.amt||0)+fee;
+  await sbUpdate('guests',g.id,updates);
+  guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); closeExt(); toast('✓ Konaklama uzatıldı → '+newCO);
 }
 
 // ═══════════════════════════════════════
 // REZERVASYON
 // ═══════════════════════════════════════
-function isRoomConflict(room, cinISO, coutISO, skipRezId){
+function isRoomConflict(room,cinISO,coutISO,skipId){
   const cin=new Date(cinISO); const cout=new Date(coutISO);
-  const gConflict=guests.find(g=>g.room===room&&g.status!=='Check-out'&&(()=>{const i=dateObj(g.checkin);const o=dateObj(g.checkout);return i&&o&&cin<o&&cout>i;})());
-  if(gConflict) return `${gConflict.name} bu odada (çıkış: ${gConflict.checkout})`;
-  const rConflict=rez.find(r=>r.room===room&&r.id!==skipRezId&&(()=>{const i=dateObj(r.cin);const o=dateObj(r.cout);return i&&o&&cin<o&&cout>i;})());
-  if(rConflict) return `${rConflict.name} adına rezervasyon var (${rConflict.cin})`;
+  const gc=guests.find(g=>g.room===room&&g.status!=='Check-out'&&(()=>{ const i=dateObj(g.checkin); const o=dateObj(g.checkout); return i&&o&&cin<o&&cout>i; })());
+  if(gc) return `${gc.name} bu odada (çıkış: ${gc.checkout})`;
+  const rc=rez.find(r=>r.room===room&&r.id!==skipId&&(()=>{ const i=dateObj(r.cin); const o=dateObj(r.cout); return i&&o&&cin<o&&cout>i; })());
+  if(rc) return `${rc.name} adına rezervasyon var`;
   return null;
 }
 
 function renderRez(){
   const filter=document.getElementById('rez-filter').value;
-  const today=new Date(); today.setHours(0,0,0,0);
   let list=[...rez].sort((a,b)=>(dateObj(a.cin)||0)-(dateObj(b.cin)||0));
   if(filter==='soon') list=list.filter(r=>{ const d=daysDiff(r.cin); return d>=0&&d<=7; });
   if(filter==='conflict') list=list.filter(r=>!!isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id));
-
-  // Alerts
   const alerts=rez.filter(r=>{ const d=daysDiff(r.cin); return d>=0&&d<=3; });
-  document.getElementById('rez-alerts').innerHTML=alerts.map(r=>{
-    const d=daysDiff(r.cin);
-    const lbl=d===0?'Bugün giriş!':d===1?'Yarın giriş':''+d+' gün sonra giriş';
-    const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id);
-    return `<div class="rez-alert">🔔 <div><strong>${r.name} — Oda ${r.room}:</strong> ${lbl}${cf?` <span style="color:#c0242a;font-weight:700">⚠️ Çakışma: ${cf}</span>`:''}</div></div>`;
-  }).join('');
-
-  // Update tab badge
-  const tabEl=document.getElementById('tab-rez');
-  tabEl.textContent = alerts.length>0 ? `📋 Rezervasyon 🔴${alerts.length}` : '📋 Rezervasyon';
-
+  document.getElementById('rez-alerts').innerHTML=alerts.map(r=>{ const d=daysDiff(r.cin); const lbl=d===0?'Bugün giriş!':d===1?'Yarın giriş':''+d+' gün sonra'; const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id); return `<div class="rez-alert">🔔 <div><strong>${r.name} — Oda ${r.room}:</strong> ${lbl}${cf?` <span style="color:#c0242a;font-weight:700">⚠️ ${cf}</span>`:''}</div></div>`; }).join('');
+  document.getElementById('tab-rez').textContent=alerts.length>0?`📋 Rezervasyon 🔴${alerts.length}`:'📋 Rezervasyon';
   document.getElementById('rez-hdr').textContent=`Rezervasyonlar (${list.length})`;
-  document.getElementById('rez-list').innerHTML=list.length===0
-    ?`<div style="text-align:center;padding:50px;color:var(--text3);font-size:14px">Rezervasyon bulunamadı</div>`
-    :list.map(r=>{
-      const d=daysDiff(r.cin);
-      const nights=Math.max(0,Math.round((dateObj(r.cout)-dateObj(r.cin))/86400000));
-      const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id);
-      let cls='rez-card rc-future', dayBadge=`<span class="rdays rd-future">${d} gün sonra</span>`;
-      if(d===0){cls='rez-card rc-soon';dayBadge=`<span class="rdays rd-today">Bugün</span>`;}
-      else if(d<=7){cls='rez-card rc-soon';dayBadge=`<span class="rdays rd-soon">${d} gün sonra</span>`;}
-      if(cf) cls+=' rc-conflict';
-      return `<div class="${cls}">
-        <div class="gtop">
-          <div class="avatar">${ini(r.name)}</div>
-          <div class="ginfo">
-            <div class="gname">${r.name}</div>
-            <div class="gmeta">Oda <strong>${r.room}</strong> · ${r.cin} → ${r.cout} · ${nights} gece</div>
-            ${r.phone?`<div class="gmeta">📞 ${r.phone}${r.persons?` · ${r.persons} kişi`:''}</div>`:''}
-            ${r.note?`<div class="gmeta" style="color:var(--text3)">💬 ${r.note}</div>`:''}
-          </div>
-          <div class="gright">${dayBadge}${r.deposit?`<div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:4px">${r.deposit.toLocaleString('tr-TR')}₺ ön</div>`:''}</div>
-        </div>
-        ${cf?`<div style="margin-top:8px;padding:8px 10px;background:#fff3d6;border-radius:6px;font-size:12px;color:#7a4500;border:1px solid #e8a020">⚠️ <strong>Çakışma:</strong> ${cf}</div>`:''}
-        <div class="card-actions" style="margin-top:9px;padding-top:9px;border-top:1px solid var(--border)">
-          <button class="abtn a-edit" onclick="editRez(${r.id})">✏️ Düzenle</button>
-          ${d>=0&&d<=1?`<button class="abtn a-in" onclick="rezToCI(${r.id})">✓ Check-in'e Al</button>`:''}
-          <button class="abtn a-del" style="flex:0;padding:7px 10px" onclick="delRez(${r.id})">✕</button>
-        </div>
-      </div>`;
-    }).join('');
+  document.getElementById('rez-list').innerHTML=list.length===0?`<div class="loading">Rezervasyon bulunamadı</div>`:list.map(r=>{ const d=daysDiff(r.cin); const nights=Math.max(0,Math.round((dateObj(r.cout)-dateObj(r.cin))/86400000)); const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id); let cls='rez-card rc-future',db=`<span class="rdays rd-future">${d} gün sonra</span>`; if(d===0){cls='rez-card rc-soon';db=`<span class="rdays rd-today">Bugün</span>`;} else if(d<=7){cls='rez-card rc-soon';db=`<span class="rdays rd-soon">${d} gün sonra</span>`;} if(cf) cls+=' rc-conflict'; return `<div class="${cls}"><div class="gtop"><div class="avatar">${ini(r.name)}</div><div class="ginfo"><div class="gname">${r.name}</div><div class="gmeta">Oda <strong>${r.room}</strong> · ${r.cin} → ${r.cout} · ${nights} gece</div>${r.phone?`<div class="gmeta">📞 ${r.phone}</div>`:''}</div><div class="gright">${db}${r.deposit?`<div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:4px">${r.deposit.toLocaleString('tr-TR')}₺ ön</div>`:''}</div></div>${cf?`<div style="margin-top:8px;padding:8px;background:#fff3d6;border-radius:6px;font-size:12px;color:#7a4500">⚠️ ${cf}</div>`:''}<div class="card-actions" style="margin-top:9px;padding-top:9px;border-top:1px solid var(--border)"><button class="abtn a-edit" onclick="editRez(${r.id})">✏️ Düzenle</button>${d>=0&&d<=1?`<button class="abtn a-in" onclick="rezToCI(${r.id})">✓ Check-in'e Al</button>`:''}<button class="abtn a-del" style="flex:0;padding:7px 10px" onclick="delRez(${r.id})">✕</button></div></div>`; }).join('');
 }
 
-function fillRezRoomSel(){
-  const sel=document.getElementById('rz-room');
-  sel.innerHTML='<option value="">Oda seç...</option>';
-  [1,2,3].forEach(f=>{ const og=document.createElement('optgroup'); og.label=f+'. Kat'; FLOORS[f].forEach(r=>{ const o=document.createElement('option'); o.value=r; o.textContent=r; og.appendChild(o); }); sel.appendChild(og); });
-}
+function fillRezRoomSel(){ const sel=document.getElementById('rz-room'); sel.innerHTML='<option value="">Oda seç...</option>'; [1,2,3].forEach(f=>{ const og=document.createElement('optgroup'); og.label=f+'. Kat'; FLOORS[f].forEach(r=>{ const o=document.createElement('option'); o.value=r; o.textContent=r; og.appendChild(o); }); sel.appendChild(og); }); }
 
-function openRezModal(){
-  editRezId=null;
-  document.getElementById('rez-title').textContent='Yeni Rezervasyon';
-  document.getElementById('rez-btn').textContent='Kaydet';
-  ['rz-name','rz-surn','rz-phone','rz-deposit','rz-note'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('rz-persons').value='';
-  document.getElementById('rz-cin').value=''; document.getElementById('rz-cout').value='';
-  document.getElementById('rz-warn').style.display='none';
-  fillRezRoomSel(); document.getElementById('modal-rez').classList.add('open');
-  setTimeout(()=>document.getElementById('rz-name').focus(),300);
-}
+function openRezModal(){ editRezId=null; document.getElementById('rez-title').textContent='Yeni Rezervasyon'; document.getElementById('rez-btn').textContent='Kaydet'; ['rz-name','rz-surn','rz-phone','rz-deposit','rz-note'].forEach(id=>document.getElementById(id).value=''); document.getElementById('rz-persons').value=''; document.getElementById('rz-cin').value=''; document.getElementById('rz-cout').value=''; document.getElementById('rz-warn').style.display='none'; fillRezRoomSel(); document.getElementById('modal-rez').classList.add('open'); setTimeout(()=>document.getElementById('rz-name').focus(),300); }
 
-function editRez(id){
-  editRezId=id; const r=rez.find(x=>x.id===id); if(!r) return;
-  document.getElementById('rez-title').textContent=r.name+' — Düzenle';
-  document.getElementById('rez-btn').textContent='Güncelle';
-  const p=r.name.split(' ');
-  document.getElementById('rz-name').value=p[0]||''; document.getElementById('rz-surn').value=p.slice(1).join(' ')||'';
-  document.getElementById('rz-phone').value=r.phone||''; document.getElementById('rz-persons').value=r.persons||'';
-  document.getElementById('rz-deposit').value=r.deposit||''; document.getElementById('rz-note').value=r.note||'';
-  document.getElementById('rz-cin').value=toISO(r.cin); document.getElementById('rz-cout').value=toISO(r.cout);
-  document.getElementById('rz-warn').style.display='none';
-  fillRezRoomSel(); document.getElementById('rz-room').value=r.room;
-  document.getElementById('modal-rez').classList.add('open');
-}
+function editRez(id){ editRezId=id; const r=rez.find(x=>x.id===id); if(!r) return; document.getElementById('rez-title').textContent=r.name+' — Düzenle'; document.getElementById('rez-btn').textContent='Güncelle'; const p=r.name.split(' '); document.getElementById('rz-name').value=p[0]||''; document.getElementById('rz-surn').value=p.slice(1).join(' ')||''; document.getElementById('rz-phone').value=r.phone||''; document.getElementById('rz-persons').value=r.persons||''; document.getElementById('rz-deposit').value=r.deposit||''; document.getElementById('rz-note').value=r.note||''; document.getElementById('rz-cin').value=toISO(r.cin); document.getElementById('rz-cout').value=toISO(r.cout); document.getElementById('rz-warn').style.display='none'; fillRezRoomSel(); document.getElementById('rz-room').value=r.room; document.getElementById('modal-rez').classList.add('open'); }
 
 function closeRezModal(){ document.getElementById('modal-rez').classList.remove('open'); editRezId=null; }
 document.getElementById('modal-rez').addEventListener('click',e=>{ if(e.target.id==='modal-rez') closeRezModal(); });
-
-function checkRezConflict(){
-  const room=document.getElementById('rz-room').value;
-  const cin=document.getElementById('rz-cin').value;
-  const cout=document.getElementById('rz-cout').value;
-  if(!room||!cin||!cout){ document.getElementById('rz-warn').style.display='none'; return; }
-  const cf=isRoomConflict(room,cin,cout,editRezId);
-  const w=document.getElementById('rz-warn');
-  if(cf){ w.style.display='flex'; document.getElementById('rz-warn-txt').textContent=cf; }
-  else w.style.display='none';
-}
+function checkRezConflict(){ const room=document.getElementById('rz-room').value; const cin=document.getElementById('rz-cin').value; const cout=document.getElementById('rz-cout').value; if(!room||!cin||!cout){ document.getElementById('rz-warn').style.display='none'; return; } const cf=isRoomConflict(room,cin,cout,editRezId); const w=document.getElementById('rz-warn'); if(cf){ w.style.display='flex'; document.getElementById('rz-warn-txt').textContent=cf; } else w.style.display='none'; }
 document.getElementById('rz-room').addEventListener('change',checkRezConflict);
 
-function saveRez(){
-  const name=document.getElementById('rz-name').value.trim();
-  const surn=document.getElementById('rz-surn').value.trim();
-  const room=document.getElementById('rz-room').value;
-  const cin=document.getElementById('rz-cin').value;
-  const cout=document.getElementById('rz-cout').value;
-  if(!name||!room||!cin||!cout){ alert('Ad, oda ve tarihler zorunludur.'); return; }
-  const data={
-    id:editRezId||nextRId++, name:`${name} ${surn}`.trim(), room,
-    cin:toTR(cin), cout:toTR(cout),
-    phone:document.getElementById('rz-phone').value.trim(),
-    persons:parseInt(document.getElementById('rz-persons').value)||1,
-    deposit:parseInt(document.getElementById('rz-deposit').value)||0,
-    note:document.getElementById('rz-note').value.trim(),
-  };
-  if(editRezId!==null){ const i=rez.findIndex(x=>x.id===editRezId); if(i>-1) rez[i]=data; toast('✓ Rezervasyon güncellendi'); }
-  else { rez.push(data); toast('✓ Rezervasyon eklendi'); }
-  lsSet('dg_rez',rez); closeRezModal(); renderRez();
-}
+async function saveRez(){ const name=document.getElementById('rz-name').value.trim(); const surn=document.getElementById('rz-surn').value.trim(); const room=document.getElementById('rz-room').value; const cin=document.getElementById('rz-cin').value; const cout=document.getElementById('rz-cout').value; if(!name||!room||!cin||!cout){ alert('Ad, oda ve tarihler zorunludur.'); return; } const data={name:`${name} ${surn}`.trim(),room,cin:toTR(cin),cout:toTR(cout),phone:document.getElementById('rz-phone').value.trim(),persons:parseInt(document.getElementById('rz-persons').value)||1,deposit:parseInt(document.getElementById('rz-deposit').value)||0,note:document.getElementById('rz-note').value.trim()}; document.getElementById('rez-btn').textContent='⏳'; if(editRezId!==null){ await sbUpdate('rezervasyonlar',editRezId,data); toast('✓ Güncellendi'); } else { await sbInsert('rezervasyonlar',data); toast('✓ Rezervasyon eklendi'); } rez=await sbSelect('rezervasyonlar','order=id.asc'); closeRezModal(); renderRez(); }
 
-function delRez(id){ if(!confirm('Rezervasyonu silmek istiyor musunuz?')) return; rez=rez.filter(r=>r.id!==id); lsSet('dg_rez',rez); renderRez(); toast('Rezervasyon silindi'); }
+async function delRez(id){ if(!confirm('Rezervasyonu silmek istiyor musunuz?')) return; await sbDelete('rezervasyonlar',id); rez=rez.filter(r=>r.id!==id); renderRez(); toast('Rezervasyon silindi'); }
 
-function rezToCI(id){
-  const r=rez.find(x=>x.id===id); if(!r) return;
-  guests.unshift({id:nextGId++,name:r.name,room:r.room,checkin:r.cin,checkout:r.cout,status:'Konaklamada',amt:r.deposit||0,pay:'beklemede'});
-  rez=rez.filter(x=>x.id!==id);
-  lsSet('dg_guests',guests); lsSet('dg_rez',rez); updateStats(); filterGuests(''); renderRez(); toast('✓ Check-in\'e alındı');
-}
+async function rezToCI(id){ const r=rez.find(x=>x.id===id); if(!r) return; await sbInsert('guests',{name:r.name,room:r.room,checkin:r.cin,checkout:r.cout,status:'Konaklamada',amt:r.deposit||0,pay:'beklemede'}); await sbDelete('rezervasyonlar',id); rez=rez.filter(x=>x.id!==id); guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); renderRez(); toast('✓ Check-in\'e alındı'); }
 
 // ═══════════════════════════════════════
 // LONG STAY
@@ -981,101 +768,30 @@ function renderLongStay(){
   document.getElementById('ls-count').textContent=`(${ls.length})`;
   const totPaid=ls.reduce((s,g)=>s+lsTotalPaid(g),0);
   const totDue=ls.reduce((s,g)=>s+(g.amt||0),0);
-  document.getElementById('ls-sums').innerHTML=`
-    <div class="psum"><div class="psum-val" style="color:var(--green)">${totPaid.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">✓ Tahsil</div></div>
-    <div class="psum"><div class="psum-val" style="color:var(--amber)">${(totDue-totPaid).toLocaleString('tr-TR')}₺</div><div class="psum-lbl">⏳ Bekleyen</div></div>
-    <div class="psum"><div class="psum-val">${ls.length}</div><div class="psum-lbl">🏠 Misafir</div></div>`;
-  document.getElementById('ls-list').innerHTML=ls.length===0
-    ?`<div style="text-align:center;padding:50px;color:var(--text3);font-size:14px">7+ günlük misafir yok</div>`
-    :ls.map(g=>{
-      const days=stayDays(g); const paid=lsTotalPaid(g); const pct=g.amt>0?Math.min(100,Math.round(paid/g.amt*100)):0;
-      return `<div class="gcard" style="border-left:4px solid #1a1a1a">
-        <div class="gtop">
-          <div class="avatar">${ini(g.name)}</div>
-          <div class="ginfo">
-            <div class="gname">${g.name}</div>
-            <div class="gmeta">Oda <strong>${g.room}</strong> · Giriş: ${g.checkin}</div>
-            <div class="gmeta" style="font-weight:700;color:#1a1a1a">🏠 ${days} gündür konaklamada</div>
-          </div>
-          <div class="gright"><span class="ls-badge">🏠 Uzun</span><div class="pay-amt" style="margin-top:4px">${fmt(g.amt)}</div></div>
-        </div>
-        <div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--border)">
-          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px">
-            <span>Ödeme</span><span style="font-weight:700;color:${pct===100?'var(--green)':'var(--amber)'}">${paid.toLocaleString('tr-TR')}₺ / ${(g.amt||0).toLocaleString('tr-TR')}₺ (%${pct})</span>
-          </div>
-          <div class="ls-bar"><div class="ls-bar-fill" style="width:${pct}%;background:${pct===100?'#1a8f4a':'#e8b84b'}"></div></div>
-        </div>
-        <div class="card-actions">
-          <button class="abtn a-edit" onclick="openEdit(${g.id})">✏️ Düzenle</button>
-          <button class="abtn a-blk" onclick="openLs(${g.id})">💳 Ödeme Ekle</button>
-          <button class="abtn a-ext" onclick="openExt(${g.id})">📅 Uzat</button>
-        </div>
-      </div>`;
-    }).join('');
+  document.getElementById('ls-sums').innerHTML=`<div class="psum"><div class="psum-val" style="color:var(--green)">${totPaid.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">✓ Tahsil</div></div><div class="psum"><div class="psum-val" style="color:var(--amber)">${(totDue-totPaid).toLocaleString('tr-TR')}₺</div><div class="psum-lbl">⏳ Bekleyen</div></div><div class="psum"><div class="psum-val">${ls.length}</div><div class="psum-lbl">🏠 Misafir</div></div>`;
+  document.getElementById('ls-list').innerHTML=ls.length===0?`<div class="loading">7+ günlük misafir yok</div>`:ls.map(g=>{ const days=stayDays(g); const paid=lsTotalPaid(g); const pct=g.amt>0?Math.min(100,Math.round(paid/g.amt*100)):0; return `<div class="gcard" style="border-left:4px solid #1a1a1a"><div class="gtop"><div class="avatar">${ini(g.name)}</div><div class="ginfo"><div class="gname">${g.name}</div><div class="gmeta">Oda <strong>${g.room}</strong> · Giriş: ${g.checkin}</div><div class="gmeta" style="font-weight:700;color:#1a1a1a">🏠 ${days} gündür konaklamada</div></div><div class="gright"><span class="ls-badge">🏠 Uzun</span><div class="pay-amt" style="margin-top:4px">${fmt(g.amt)}</div></div></div><div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--border)"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px"><span>Ödeme</span><span style="font-weight:700;color:${pct===100?'var(--green)':'var(--amber)'}">${paid.toLocaleString('tr-TR')}₺ / ${(g.amt||0).toLocaleString('tr-TR')}₺ (%${pct})</span></div><div class="ls-bar"><div class="ls-bar-fill" style="width:${pct}%;background:${pct===100?'#1a8f4a':'#e8b84b'}"></div></div></div><div class="card-actions"><button class="abtn a-edit" onclick="openEdit(${g.id})">✏️ Düzenle</button><button class="abtn a-blk" onclick="openLs(${g.id})">💳 Ödeme</button><button class="abtn a-ext" onclick="openExt(${g.id})">📅 Uzat</button></div></div>`; }).join('');
 }
 
-function lsTotalPaid(g){ return (g.lsPays||[]).reduce((s,p)=>s+p.amt,0); }
-
+function lsTotalPaid(g){ return ((g.lspays)||[]).reduce((s,p)=>s+(p.amt||0),0); }
 function selLsPay(t){ lsPay=t; document.getElementById('ls-cash').classList.toggle('sel',t==='nakit'); document.getElementById('ls-card').classList.toggle('sel',t==='kart'); }
 
-function openLs(id){
-  lsGuestId=id; const g=guests.find(x=>x.id===id); if(!g) return;
-  document.getElementById('ls-title').textContent=g.name+' — Ödemeler';
-  document.getElementById('ls-amt').value=''; document.getElementById('ls-note').value='';
-  document.getElementById('ls-date').value=new Date().toISOString().split('T')[0];
-  selLsPay('nakit'); renderLsLog(g);
-  document.getElementById('modal-ls').classList.add('open');
-}
+function openLs(id){ lsGuestId=id; const g=guests.find(x=>x.id===id); if(!g) return; document.getElementById('ls-title').textContent=g.name+' — Ödemeler'; document.getElementById('ls-amt').value=''; document.getElementById('ls-note').value=''; document.getElementById('ls-date').value=new Date().toISOString().split('T')[0]; selLsPay('nakit'); renderLsLog(g); document.getElementById('modal-ls').classList.add('open'); }
 function closeLs(){ document.getElementById('modal-ls').classList.remove('open'); lsGuestId=null; }
 document.getElementById('modal-ls').addEventListener('click',e=>{ if(e.target.id==='modal-ls') closeLs(); });
 
-function renderLsLog(g){
-  const log=g.lsPays||[];
-  document.getElementById('ls-log').innerHTML=log.length===0
-    ?`<div style="color:var(--text3);font-size:13px;padding:6px">Henüz kayıt yok</div>`
-    :log.map((p,i)=>`<div class="pm-entry"><div><strong>${p.amt.toLocaleString('tr-TR')}₺</strong> <span class="pbadge ${p.pay==='nakit'?'p-cash':'p-card'}" style="font-size:10px">${p.pay==='nakit'?'💵':'💳'}</span></div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--text2)">${p.date}${p.note?' · '+p.note:''}</span><button class="pm-del" onclick="delLsPay(${g.id},${i})">✕</button></div></div>`).join('');
-}
+function renderLsLog(g){ const log=(g.lspays)||[]; document.getElementById('ls-log').innerHTML=log.length===0?`<div style="color:var(--text3);font-size:13px;padding:6px">Henüz kayıt yok</div>`:log.map((p,i)=>`<div class="pm-entry"><div><strong>${p.amt.toLocaleString('tr-TR')}₺</strong> <span class="pbadge ${p.pay==='nakit'?'p-cash':'p-card'}" style="font-size:10px">${p.pay==='nakit'?'💵':'💳'}</span></div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--text2)">${p.date}${p.note?' · '+p.note:''}</span><button class="pm-del" onclick="delLsPay(${g.id},${i})">✕</button></div></div>`).join(''); }
 
-function addLsPay(){
-  const amt=parseInt(document.getElementById('ls-amt').value)||0;
-  const date=document.getElementById('ls-date').value;
-  const note=document.getElementById('ls-note').value.trim();
-  if(!amt){ alert('Tutar girin.'); return; }
-  const g=guests.find(x=>x.id===lsGuestId); if(!g) return;
-  if(!g.lsPays) g.lsPays=[];
-  g.lsPays.push({amt,pay:lsPay,date:toTR(date),note});
-  lsSet('dg_guests',guests); renderLsLog(g); renderLongStay(); document.getElementById('ls-amt').value=''; document.getElementById('ls-note').value=''; toast('✓ Ödeme kaydedildi');
-}
+async function addLsPay(){ const amt=parseInt(document.getElementById('ls-amt').value)||0; const date=document.getElementById('ls-date').value; const note=document.getElementById('ls-note').value.trim(); if(!amt){ alert('Tutar girin.'); return; } const g=guests.find(x=>x.id===lsGuestId); if(!g) return; const pays=(g.lspays||[]); pays.push({amt,pay:lsPay,date:toTR(date),note}); await sbUpdate('guests',g.id,{lspays:pays}); g.lspays=pays; renderLsLog(g); renderLongStay(); document.getElementById('ls-amt').value=''; document.getElementById('ls-note').value=''; toast('✓ Ödeme kaydedildi'); }
 
-function delLsPay(gid,idx){
-  const g=guests.find(x=>x.id===gid); if(!g||!g.lsPays) return;
-  g.lsPays.splice(idx,1); lsSet('dg_guests',guests); renderLsLog(g); renderLongStay(); toast('Ödeme silindi');
-}
+async function delLsPay(gid,idx){ const g=guests.find(x=>x.id===gid); if(!g||!g.lspays) return; g.lspays.splice(idx,1); await sbUpdate('guests',g.id,{lspays:g.lspays}); renderLsLog(g); renderLongStay(); toast('Ödeme silindi'); }
 
 // ═══════════════════════════════════════
 // TODAY
 // ═══════════════════════════════════════
-function renderToday(){
-  const td=new Date().toLocaleDateString('tr-TR');
-  const ops=guests.filter(g=>g.checkin===td||g.checkout===td).map(g=>({
-    name:g.name, room:g.room, id:g.id,
-    op:g.checkin===td?'checkin':'checkout',
-    done:g.status==='Check-out'||(g.status==='Konaklamada'&&g.checkin!==td),
-  }));
-  document.getElementById('ops-list').innerHTML=ops.length===0
-    ?`<div style="text-align:center;padding:50px;color:var(--text3);font-size:14px">Bugün işlem yok</div>`
-    :ops.map(op=>`<div class="ocard">
-      <div class="oicon ${op.op==='checkin'?'oi-in':'oi-out'}">${op.op==='checkin'?'🔑':'🧳'}</div>
-      <div class="oinfo"><div class="oname">${op.name}</div><div class="odet">Oda ${op.room} · ${op.op==='checkin'?'Check-in':'Check-out'}</div></div>
-      <div class="oright">
-        <div class="${op.done?'os-done':'os-pend'}">${op.done?'✓ Tamamlandı':'● Bekliyor'}</div>
-        <button class="abtn a-edit" style="margin-top:5px;flex:0;padding:4px 9px;font-size:11px" onclick="openEdit(${op.id})">Düzenle</button>
-      </div>
-    </div>`).join('');
-}
+function renderToday(){ const td=new Date().toLocaleDateString('tr-TR'); const ops=guests.filter(g=>g.checkin===td||g.checkout===td).map(g=>({name:g.name,room:g.room,id:g.id,op:g.checkin===td?'checkin':'checkout',done:g.status==='Check-out'||(g.status==='Konaklamada'&&g.checkin!==td)})); document.getElementById('ops-list').innerHTML=ops.length===0?`<div class="loading">Bugün işlem yok</div>`:ops.map(op=>`<div class="ocard"><div class="oicon ${op.op==='checkin'?'oi-in':'oi-out'}">${op.op==='checkin'?'🔑':'🧳'}</div><div class="oinfo"><div class="oname">${op.name}</div><div class="odet">Oda ${op.room} · ${op.op==='checkin'?'Check-in':'Check-out'}</div></div><div class="oright"><div class="${op.done?'os-done':'os-pend'}">${op.done?'✓ Tamamlandı':'● Bekliyor'}</div><button class="abtn a-edit" style="margin-top:5px;flex:0;padding:4px 9px;font-size:11px" onclick="openEdit(${op.id})">Düzenle</button></div></div>`).join(''); }
 
 // ═══════════════════════════════════════
-// PWA
+// PWA & INIT
 // ═══════════════════════════════════════
 let dp;
 window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault();dp=e; document.getElementById('ibanner').classList.add('show'); });
@@ -1083,12 +799,14 @@ document.getElementById('ibtn').addEventListener('click',()=>{ if(dp){dp.prompt(
 window.addEventListener('appinstalled',()=>document.getElementById('ibanner').classList.remove('show'));
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
-// ═══════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════
-updateStats();
-filterGuests('');
-renderRez();
+// Boot
+(async()=>{
+  guests = await sbSelect('guests','order=id.desc');
+  rez    = await sbSelect('rezervasyonlar','order=id.asc');
+  updateStats();
+  filterGuests('');
+  renderRez();
+})();
 </script>
 </body>
 </html>
