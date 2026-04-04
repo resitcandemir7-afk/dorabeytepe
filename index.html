@@ -404,12 +404,12 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
       <div class="fgrp" style="margin:0">
         <label class="flbl">Manzara</label>
         <select class="finput" id="rm-view">
-          <option>Bahçe</option>
-          <option>Şehir</option>
-          <option>Havuz</option>
-          <option>Dağ</option>
-          <option>Deniz</option>
-          <option>İç Avlu</option>
+          <option>Koridor</option>
+          <option>Villa</option>
+          <option>M.Sera</option>
+          <option>Avlu</option>
+          <option>Yol</option>
+          <option>Cafe</option>
         </select>
       </div>
     </div>
@@ -694,7 +694,7 @@ function getRoomInfo(r){
   const idx=(parseInt(r)%100)-1;
   return {
     type:d.type||['Tek Kişilik','Çift Kişilik','2 Tek Yataklı','Çift Kişilik'][idx%4],
-    view:d.view||['Bahçe','Şehir','Havuz','Bahçe'][idx%4],
+    view:d.view||['Koridor','Villa','M.Sera','Avlu','Yol','Cafe'][idx%6],
     sqm:d.sqm||[18,22,22,24][idx%4],
     ac:d.ac!==undefined?d.ac:true,
     bal:d.bal||false,
