@@ -482,6 +482,7 @@ let rez = [];
 let rooms = (()=>{ try{ const s=localStorage.getItem('dg_rooms'); return s?JSON.parse(s):{} }catch(e){ return {} } })();
 let ciPay='nakit', editId=null, delId=null;
 let extId=null, editRezId=null, lsGuestId=null, lsPay='nakit';
+let editRoomId=null, rmType='Çift Kişilik', rmView='Bahçe', rmAc=true, rmBal=false, rmTV=true, rmSafe=false, rmMbar=false;
 
 // ═══════════════════════════════════════
 // HELPERS
@@ -703,7 +704,6 @@ function getRoomInfo(r){
   };
 }
 
-let editRoomId=null, rmType='Çift Kişilik', rmView='Bahçe', rmAc=true, rmBal=false, rmTV=true, rmSafe=false, rmMbar=false;
 
 function openRoomModal(r){
   editRoomId=r;
