@@ -152,7 +152,27 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .toast{position:fixed;bottom:calc(var(--sb)+75px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--text);color:var(--surface);border-radius:var(--rs);padding:10px 18px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;z-index:500;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .loading{text-align:center;padding:50px;color:var(--text3);font-size:14px;}
-.ibanner{display:none;position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;background:var(--surface);border:1px solid var(--accent);border-radius:var(--r);padding:11px 13px;align-items:center;gap:9px;}
+/* Temizlik & Teknik */
+.tmz-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:11px 13px;display:flex;align-items:center;gap:10px;}
+.tmz-room{width:44px;height:44px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;font-family:'DM Mono',monospace;flex-shrink:0;}
+.tmz-bek{background:#ffe9b0;color:#8a5000;} .tmz-tmz{background:#e4f0ff;color:#1462b8;} .tmz-knt{background:#f0eaff;color:#6a35b8;} .tmz-ok{background:#c8f5d8;color:#0a6b2e;}
+.tmz-info{flex:1;min-width:0;}
+.tmz-name{font-size:13px;font-weight:600;color:var(--text);}
+.tmz-meta{font-size:11px;color:var(--text2);margin-top:2px;}
+.tmz-actions{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+.tmz-btn{padding:4px 9px;border-radius:var(--rs);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border-md);background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.tmz-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.tek-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:12px 13px;}
+.tek-top{display:flex;align-items:center;gap:10px;}
+.tek-icon{width:36px;height:36px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.tek-acik{background:var(--red-bg);} .tek-devam{background:var(--amber-bg);} .tek-tamam{background:var(--green-bg);}
+.onc-high{color:var(--red);font-weight:700;font-size:11px;} .onc-med{color:var(--amber);font-weight:700;font-size:11px;} .onc-low{color:var(--green);font-weight:700;font-size:11px;}
+/* İstatistik */
+.ist-bar-wrap{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:12px 13px;margin-bottom:8px;}
+.ist-bar-lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px;}
+.ist-bar-bg{background:var(--surface2);border-radius:4px;height:8px;}
+.ist-bar-fill{height:100%;border-radius:4px;background:var(--accent);}
+position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;background:var(--surface);border:1px solid var(--accent);border-radius:var(--r);padding:11px 13px;align-items:center;gap:9px;}
 .ibanner.show{display:flex;}
 .itext{flex:1;font-size:13px;line-height:1.4;color:var(--text);}
 .ibtn{background:var(--accent);color:#fff;border:none;border-radius:var(--rs);padding:7px 11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
@@ -183,6 +203,9 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
     <div class="tab" onclick="switchTab('pay',this)">Ödemeler</div>
     <div class="tab" onclick="switchTab('rez',this)" id="tab-rez">📋 Rezervasyon</div>
     <div class="tab" onclick="switchTab('longstay',this)">🏠 Uzun Konaklama</div>
+    <div class="tab" onclick="switchTab('temizlik',this)">🧹 Temizlik</div>
+    <div class="tab" onclick="switchTab('teknik',this)">🔧 Teknik</div>
+    <div class="tab" onclick="switchTab('istatistik',this)">📊 İstatistik</div>
     <div class="tab" onclick="switchTab('today',this)">Bugün</div>
   </div>
   <div class="content">
@@ -232,6 +255,49 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
       <div class="sec-hdr" style="margin-top:4px">Detaylar</div>
       <div class="glist" id="ls-list"></div>
     </div>
+    <!-- Temizlik -->
+    <div class="pane" id="pane-temizlik">
+      <div class="toolbar" style="padding-bottom:0">
+        <select class="fsel" id="tmz-filter" onchange="renderTemizlik()">
+          <option value="all">Tümü</option>
+          <option value="Bekliyor">Bekliyor</option>
+          <option value="Temizleniyor">Temizleniyor</option>
+          <option value="Kontrol">Kontrol</option>
+          <option value="Temiz">Temiz</option>
+        </select>
+        <button class="btn-new" style="font-size:12px;padding:8px 12px" onclick="tmzResetAll()">↺ Güncelle</button>
+      </div>
+      <div class="psums" id="tmz-sums" style="margin-top:10px"></div>
+      <div class="glist" id="tmz-list" style="margin-top:8px"></div>
+    </div>
+
+    <!-- Teknik -->
+    <div class="pane" id="pane-teknik">
+      <div class="toolbar" style="padding-bottom:0">
+        <select class="fsel" id="tek-filter" onchange="renderTeknik()">
+          <option value="all">Tümü</option>
+          <option value="Açık">Açık</option>
+          <option value="Devam Ediyor">Devam Ediyor</option>
+          <option value="Tamamlandı">Tamamlandı</option>
+        </select>
+        <button class="btn-new" style="font-size:12px;padding:8px 12px" onclick="openTeknikModal()">+ Arıza Bildir</button>
+      </div>
+      <div class="psums" id="tek-sums" style="margin-top:10px"></div>
+      <div class="glist" id="tek-list" style="margin-top:8px"></div>
+    </div>
+
+    <!-- İstatistik -->
+    <div class="pane" id="pane-istatistik">
+      <div class="sec-hdr">Genel Özet</div>
+      <div class="psums" id="ist-sums"></div>
+      <div class="sec-hdr" style="margin-top:10px">Ödeme Dağılımı</div>
+      <div class="psums" id="ist-pay"></div>
+      <div class="sec-hdr" style="margin-top:10px">Oda Doluluk Oranı</div>
+      <div id="ist-occ" style="padding:0 14px"></div>
+      <div class="sec-hdr" style="margin-top:10px">Son Eklenen Misafirler</div>
+      <div class="glist" id="ist-recent"></div>
+    </div>
+
     <div class="pane" id="pane-today">
       <div class="sec-hdr">Bugünkü İşlemler</div>
       <div class="olist" id="ops-list"></div>
@@ -372,6 +438,41 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
     <div class="mactions">
       <button class="mcancel" onclick="closeLs()">Kapat</button>
       <button class="mconfirm" onclick="addLsPay()">Ödeme Ekle</button>
+    </div>
+  </div>
+</div>
+
+<!-- Teknik Arıza Modal -->
+<div class="mbg" id="modal-teknik">
+  <div class="msheet">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="tek-modal-title">Arıza Bildir</div>
+    <div class="frow">
+      <div class="fgrp"><label class="flbl">Oda No</label><select class="finput" id="tek-room"><option value="">Seç...</option></select></div>
+      <div class="fgrp"><label class="flbl">Öncelik</label>
+        <select class="finput" id="tek-onc">
+          <option value="Yüksek">🔴 Yüksek</option>
+          <option value="Orta">🟡 Orta</option>
+          <option value="Düşük">🟢 Düşük</option>
+        </select>
+      </div>
+    </div>
+    <div class="fgrp"><label class="flbl">Arıza Türü</label>
+      <div class="rm-chips" id="tek-type-chips">
+        <div class="rm-chip" onclick="selTekType('Klima',this)">❄️ Klima</div>
+        <div class="rm-chip" onclick="selTekType('Elektrik',this)">⚡ Elektrik</div>
+        <div class="rm-chip" onclick="selTekType('Su/Tesisat',this)">🚿 Su/Tesisat</div>
+        <div class="rm-chip" onclick="selTekType('Kapı/Kilit',this)">🔑 Kapı/Kilit</div>
+        <div class="rm-chip" onclick="selTekType('TV/Elektronik',this)">📺 TV/Elektronik</div>
+        <div class="rm-chip" onclick="selTekType('Mobilya',this)">🪑 Mobilya</div>
+        <div class="rm-chip" onclick="selTekType('Diğer',this)">🔧 Diğer</div>
+      </div>
+    </div>
+    <div class="fgrp"><label class="flbl">Açıklama</label><input class="finput" type="text" id="tek-desc" placeholder="Detay..."></div>
+    <div class="fgrp"><label class="flbl">Sorumlu Personel</label><input class="finput" type="text" id="tek-personel" placeholder="İsteğe bağlı"></div>
+    <div class="mactions">
+      <button class="mcancel" onclick="closeTeknikModal()">İptal</button>
+      <button class="mconfirm" id="tek-save-btn" onclick="saveTeknik()">Kaydet</button>
     </div>
   </div>
 </div>
@@ -527,6 +628,9 @@ async function switchTab(tab, el){
   if(tab==='pay'){ guests=await sbSelect('guests','order=id.desc'); renderPay(); }
   if(tab==='rez'){ rez=await sbSelect('rezervasyonlar','order=id.asc'); renderRez(); }
   if(tab==='longstay'){ guests=await sbSelect('guests','order=id.desc'); renderLongStay(); }
+  if(tab==='temizlik'){ guests=await sbSelect('guests','order=id.desc'); renderTemizlik(); }
+  if(tab==='teknik'){ renderTeknik(); }
+  if(tab==='istatistik'){ guests=await sbSelect('guests','order=id.desc'); renderIstatistik(); }
   if(tab==='today'){ guests=await sbSelect('guests','order=id.desc'); renderToday(); }
 }
 
@@ -908,6 +1012,172 @@ async function delLsPay(gid,idx){ const g=guests.find(x=>x.id===gid); if(!g||!g.
 // TODAY
 // ═══════════════════════════════════════
 function renderToday(){ const td=new Date().toLocaleDateString('tr-TR'); const ops=guests.filter(g=>g.checkin===td||g.checkout===td).map(g=>({name:g.name,room:g.room,id:g.id,op:g.checkin===td?'checkin':'checkout',done:g.status==='Check-out'||(g.status==='Konaklamada'&&g.checkin!==td)})); document.getElementById('ops-list').innerHTML=ops.length===0?`<div class="loading">Bugün işlem yok</div>`:ops.map(op=>`<div class="ocard"><div class="oicon ${op.op==='checkin'?'oi-in':'oi-out'}">${op.op==='checkin'?'🔑':'🧳'}</div><div class="oinfo"><div class="oname">${op.name}</div><div class="odet">Oda ${op.room} · ${op.op==='checkin'?'Check-in':'Check-out'}</div></div><div class="oright"><div class="${op.done?'os-done':'os-pend'}">${op.done?'✓ Tamamlandı':'● Bekliyor'}</div><button class="abtn a-edit" style="margin-top:5px;flex:0;padding:4px 9px;font-size:11px" onclick="openEdit(${op.id})">Düzenle</button></div></div>`).join(''); }
+
+// ═══════════════════════════════════════
+// TEMİZLİK
+// ═══════════════════════════════════════
+let tmzData = (()=>{ try{ const s=localStorage.getItem('dg_tmz'); if(s) return JSON.parse(s); }catch(e){} const all=[...Array.from({length:24},(_,i)=>String(101+i)),...Array.from({length:24},(_,i)=>String(201+i)),...Array.from({length:25},(_,i)=>String(301+i))]; return all.map(r=>({room:r,status:'Bekliyor',time:''})); })();
+function saveTmz(){ try{ localStorage.setItem('dg_tmz',JSON.stringify(tmzData)); }catch(e){} }
+
+const TMZ_ICONS={Bekliyor:'🟡',Temizleniyor:'🔵',Kontrol:'🟣',Temiz:'🟢'};
+const TMZ_CLS={Bekliyor:'tmz-bek',Temizleniyor:'tmz-tmz',Kontrol:'tmz-knt',Temiz:'tmz-ok'};
+
+function tmzResetAll(){
+  const coday=new Set(guests.filter(g=>g.status==='Check-out').map(g=>g.room));
+  tmzData.forEach(t=>{ if(coday.has(t.room)) t.status='Bekliyor'; });
+  saveTmz(); renderTemizlik(); toast('✓ Güncellendi');
+}
+
+function setTmz(room,status){
+  const t=tmzData.find(x=>x.room===room);
+  if(t){ t.status=status; t.time=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); saveTmz(); renderTemizlik(); }
+}
+
+function renderTemizlik(){
+  const filter=document.getElementById('tmz-filter').value;
+  const occ=new Set(guests.filter(g=>g.status==='Konaklamada').map(g=>g.room));
+  let list=tmzData.filter(t=>filter==='all'||t.status===filter);
+  const counts={Bekliyor:0,Temizleniyor:0,Kontrol:0,Temiz:0};
+  tmzData.forEach(t=>counts[t.status]=(counts[t.status]||0)+1);
+  document.getElementById('tmz-sums').innerHTML=`
+    <div class="psum"><div class="psum-val" style="color:var(--amber)">${counts.Bekliyor}</div><div class="psum-lbl">🟡 Bekliyor</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--blue)">${counts.Temizleniyor}</div><div class="psum-lbl">🔵 Temizleniyor</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--green)">${counts.Temiz}</div><div class="psum-lbl">🟢 Temiz</div></div>`;
+  document.getElementById('tmz-list').innerHTML=list.length===0?`<div class="loading">Oda bulunamadı</div>`:list.map(t=>`
+    <div class="tmz-card">
+      <div class="tmz-room ${TMZ_CLS[t.status]}">${t.room}</div>
+      <div class="tmz-info">
+        <div class="tmz-name">${TMZ_ICONS[t.status]} ${t.status}</div>
+        <div class="tmz-meta">${occ.has(t.room)?'👤 Dolu':'🟢 Boş'}${t.time?' · '+t.time:''}</div>
+      </div>
+      <div class="tmz-actions">
+        <button class="tmz-btn${t.status==='Temizleniyor'?' active':''}" onclick="setTmz('${t.room}','Temizleniyor')">Temizleniyor</button>
+        <button class="tmz-btn${t.status==='Kontrol'?' active':''}" onclick="setTmz('${t.room}','Kontrol')">Kontrol</button>
+        <button class="tmz-btn${t.status==='Temiz'?' active':''}" onclick="setTmz('${t.room}','Temiz')">Temiz ✓</button>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// TEKNİK / ARIZA
+// ═══════════════════════════════════════
+let tekData = (()=>{ try{ const s=localStorage.getItem('dg_teknik'); if(s) return JSON.parse(s); }catch(e){} return []; })();
+let tekNextId = tekData.reduce((m,t)=>Math.max(m,t.id),0)+1;
+let editTekId = null;
+let tekType = 'Diğer';
+function saveTekData(){ try{ localStorage.setItem('dg_teknik',JSON.stringify(tekData)); }catch(e){} }
+
+const TEK_ICON={'Yüksek':'🔴','Orta':'🟡','Düşük':'🟢'};
+const TEK_CARD={'Açık':'tek-acik','Devam Ediyor':'tek-devam','Tamamlandı':'tek-tamam'};
+
+function renderTeknik(){
+  const filter=document.getElementById('tek-filter').value;
+  let list=tekData.filter(t=>filter==='all'||t.status===filter);
+  list.sort((a,b)=>({Yüksek:0,Orta:1,Düşük:2}[a.onc]||1)-({Yüksek:0,Orta:1,Düşük:2}[b.onc]||1));
+  const acik=tekData.filter(t=>t.status==='Açık').length;
+  const devam=tekData.filter(t=>t.status==='Devam Ediyor').length;
+  const tamam=tekData.filter(t=>t.status==='Tamamlandı').length;
+  document.getElementById('tek-sums').innerHTML=`
+    <div class="psum"><div class="psum-val" style="color:var(--red)">${acik}</div><div class="psum-lbl">🔴 Açık</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--amber)">${devam}</div><div class="psum-lbl">🟡 Devam</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--green)">${tamam}</div><div class="psum-lbl">✅ Tamam</div></div>`;
+  document.getElementById('tek-list').innerHTML=list.length===0?`<div class="loading">Kayıt bulunamadı</div>`:list.map(t=>`
+    <div class="tek-card">
+      <div class="tek-top">
+        <div class="tek-icon ${TEK_CARD[t.status]||'tek-acik'}">🔧</div>
+        <div class="ginfo">
+          <div class="gname">Oda ${t.room} — ${t.type}</div>
+          <div class="gmeta">${TEK_ICON[t.onc]||''} ${t.onc} öncelik${t.personel?' · '+t.personel:''}</div>
+          ${t.desc?`<div class="gmeta" style="color:var(--text3)">${t.desc}</div>`:''}
+        </div>
+        <div class="gright" style="gap:4px">
+          <span class="badge ${t.status==='Açık'?'b-out':t.status==='Devam Ediyor'?'b-wait':'b-stay'}">${t.status}</span>
+          <div style="display:flex;gap:4px;margin-top:4px">
+            ${t.status!=='Devam Ediyor'?`<button class="tmz-btn" onclick="tekSetStatus(${t.id},'Devam Ediyor')">Devam</button>`:''}
+            ${t.status!=='Tamamlandı'?`<button class="tmz-btn active" onclick="tekSetStatus(${t.id},'Tamamlandı')">✓</button>`:''}
+            <button class="tmz-btn" style="color:var(--red)" onclick="tekDel(${t.id})">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function selTekType(t,el){ tekType=t; document.querySelectorAll('#tek-type-chips .rm-chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+
+function openTeknikModal(){
+  editTekId=null; tekType='Diğer';
+  document.getElementById('tek-modal-title').textContent='Arıza Bildir';
+  document.getElementById('tek-save-btn').textContent='Kaydet';
+  document.getElementById('tek-desc').value=''; document.getElementById('tek-personel').value='';
+  document.getElementById('tek-onc').value='Orta';
+  document.querySelectorAll('#tek-type-chips .rm-chip').forEach(c=>c.classList.remove('sel'));
+  // Fill room select
+  const sel=document.getElementById('tek-room'); sel.innerHTML='<option value="">Oda seç...</option>';
+  [1,2,3].forEach(f=>{ const og=document.createElement('optgroup'); og.label=f+'. Kat'; Array.from({length:f===3?25:24},(_,i)=>String(f*100+1+i)).forEach(r=>{ const o=document.createElement('option'); o.value=r; o.textContent=r; og.appendChild(o); }); sel.appendChild(og); });
+  document.getElementById('modal-teknik').classList.add('open');
+}
+function closeTeknikModal(){ document.getElementById('modal-teknik').classList.remove('open'); editTekId=null; }
+document.getElementById('modal-teknik').addEventListener('click',e=>{ if(e.target.id==='modal-teknik') closeTeknikModal(); });
+
+function saveTeknik(){
+  const room=document.getElementById('tek-room').value;
+  if(!room){ alert('Oda seçin.'); return; }
+  const data={id:editTekId||tekNextId++,room,type:tekType,onc:document.getElementById('tek-onc').value,desc:document.getElementById('tek-desc').value.trim(),personel:document.getElementById('tek-personel').value.trim(),status:'Açık',date:new Date().toLocaleDateString('tr-TR')};
+  if(editTekId){ const i=tekData.findIndex(x=>x.id===editTekId); if(i>-1) tekData[i]={...tekData[i],...data}; }
+  else tekData.unshift(data);
+  saveTekData(); closeTeknikModal(); renderTeknik(); toast('✓ Arıza kaydedildi');
+}
+
+function tekSetStatus(id,status){ const t=tekData.find(x=>x.id===id); if(t){t.status=status; saveTekData(); renderTeknik(); toast('✓ Güncellendi');} }
+function tekDel(id){ if(!confirm('Kaydı silmek istiyor musunuz?')) return; tekData=tekData.filter(x=>x.id!==id); saveTekData(); renderTeknik(); toast('Kayıt silindi'); }
+
+// ═══════════════════════════════════════
+// İSTATİSTİK
+// ═══════════════════════════════════════
+function renderIstatistik(){
+  const total=73; // toplam oda
+  const occ=guests.filter(g=>g.status==='Konaklamada').length;
+  const wait=guests.filter(g=>g.status==='Bekleniyor').length;
+  const out=guests.filter(g=>g.status==='Check-out').length;
+  const rev=guests.filter(g=>g.pay!=='beklemede').reduce((s,g)=>s+(g.amt||0),0);
+  const pend=guests.filter(g=>g.pay==='beklemede').reduce((s,g)=>s+(g.amt||0),0);
+  const occPct=Math.round(occ/total*100);
+
+  document.getElementById('ist-sums').innerHTML=`
+    <div class="psum"><div class="psum-val" style="color:var(--red)">${occ}</div><div class="psum-lbl">Dolu Oda</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--green)">${total-occ}</div><div class="psum-lbl">Boş Oda</div></div>
+    <div class="psum"><div class="psum-val gold">${rev.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">Tahsil Edildi</div></div>`;
+
+  const cash=guests.filter(g=>g.pay==='nakit').reduce((s,g)=>s+(g.amt||0),0);
+  const card=guests.filter(g=>g.pay==='kart').reduce((s,g)=>s+(g.amt||0),0);
+  document.getElementById('ist-pay').innerHTML=`
+    <div class="psum"><div class="psum-val" style="color:var(--green)">${cash.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">💵 Nakit</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--blue)">${card.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">💳 Kart</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--amber)">${pend.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">⏳ Bekleyen</div></div>`;
+
+  document.getElementById('ist-occ').innerHTML=`
+    <div class="ist-bar-wrap">
+      <div class="ist-bar-lbl"><span>Doluluk Oranı</span><span style="font-weight:700;color:var(--text)">${occPct}% (${occ}/${total})</span></div>
+      <div class="ist-bar-bg"><div class="ist-bar-fill" style="width:${occPct}%"></div></div>
+    </div>
+    <div class="ist-bar-wrap">
+      <div class="ist-bar-lbl"><span>Konaklamada</span><span>${occ}</span></div>
+      <div class="ist-bar-bg"><div class="ist-bar-fill" style="width:${Math.round(occ/total*100)}%;background:var(--blue)"></div></div>
+    </div>
+    <div class="ist-bar-wrap">
+      <div class="ist-bar-lbl"><span>Bekleniyor</span><span>${wait}</span></div>
+      <div class="ist-bar-bg"><div class="ist-bar-fill" style="width:${Math.round(wait/total*100)}%;background:var(--amber)"></div></div>
+    </div>`;
+
+  document.getElementById('ist-recent').innerHTML=guests.slice(0,5).map(g=>`
+    <div class="gcard">
+      <div class="gtop">
+        <div class="avatar">${ini(g.name)}</div>
+        <div class="ginfo"><div class="gname">${g.name}</div><div class="gmeta">Oda ${g.room} · ${g.checkin} → ${g.checkout}</div></div>
+        <div class="gright"><span class="badge ${bCls(g.status)}">${g.status}</span><div class="pay-amt">${fmt(g.amt)}</div></div>
+      </div>
+    </div>`).join('');
+}
 
 // ═══════════════════════════════════════
 // PWA & INIT
