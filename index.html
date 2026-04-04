@@ -152,7 +152,17 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .toast{position:fixed;bottom:calc(var(--sb)+75px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--text);color:var(--surface);border-radius:var(--rs);padding:10px 18px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;z-index:500;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .loading{text-align:center;padding:50px;color:var(--text3);font-size:14px;}
-/* Temizlik & Teknik */
+/* Fiyat */
+.fiyat-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:12px 13px;display:flex;align-items:center;gap:12px;}
+.fiyat-room{width:44px;height:44px;border-radius:var(--rs);background:var(--accent-bg);border:1.5px solid var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-family:'DM Mono',monospace;color:var(--accent);flex-shrink:0;}
+.fiyat-info{flex:1;min-width:0;}
+.fiyat-prices{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;}
+.fpill{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+.fp-gun{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);}
+.fp-uzun{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+.fp-hs{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
+.fp-yok{background:var(--surface2);color:var(--text3);border:1px solid var(--border);}
+
 .tmz-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:11px 13px;display:flex;align-items:center;gap:10px;}
 .tmz-room{width:44px;height:44px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;font-family:'DM Mono',monospace;flex-shrink:0;}
 .tmz-bek{background:#ffe9b0;color:#8a5000;} .tmz-tmz{background:#e4f0ff;color:#1462b8;} .tmz-knt{background:#f0eaff;color:#6a35b8;} .tmz-ok{background:#c8f5d8;color:#0a6b2e;}
@@ -200,6 +210,7 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
   <div class="tabs">
     <div class="tab active" onclick="switchTab('guests',this)">Misafirler</div>
     <div class="tab" onclick="switchTab('rooms',this)">Odalar</div>
+    <div class="tab" onclick="switchTab('fiyat',this)">💰 Fiyatlar</div>
     <div class="tab" onclick="switchTab('pay',this)">Ödemeler</div>
     <div class="tab" onclick="switchTab('rez',this)" id="tab-rez">📋 Rezervasyon</div>
     <div class="tab" onclick="switchTab('longstay',this)">🏠 Uzun Konaklama</div>
@@ -229,6 +240,21 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
         <div class="leg"><div class="ldot" style="background:#1a1a1a;border-color:#000"></div>Temizlik</div>
       </div>
       <div class="floors" id="floors"></div>
+    </div>
+
+    <!-- Fiyatlar -->
+    <div class="pane" id="pane-fiyat">
+      <div class="toolbar" style="padding-bottom:0">
+        <select class="fsel" id="fiyat-filter" onchange="renderFiyatlar()">
+          <option value="all">Tüm Odalar</option>
+          <option value="1">1. Kat</option>
+          <option value="2">2. Kat</option>
+          <option value="3">3. Kat</option>
+        </select>
+        <button class="btn-new" style="font-size:12px;padding:8px 12px" onclick="openFiyatModal()">+ Fiyat Güncelle</button>
+      </div>
+      <div class="sec-hdr">Oda Fiyat Listesi</div>
+      <div class="glist" id="fiyat-list"></div>
     </div>
     <div class="pane" id="pane-pay">
       <div class="sec-hdr">Özet</div>
@@ -442,6 +468,42 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
   </div>
 </div>
 
+<!-- Fiyat Modal -->
+<div class="mbg" id="modal-fiyat">
+  <div class="msheet">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="fiyat-modal-title">Fiyat Güncelle</div>
+    <div class="fgrp">
+      <label class="flbl">Oda No</label>
+      <select class="finput" id="fiyat-room" onchange="loadRoomFiyat()">
+        <option value="">Oda seç...</option>
+      </select>
+    </div>
+    <div class="frow">
+      <div class="fgrp">
+        <label class="flbl">Günlük Fiyat (₺)</label>
+        <input class="finput" type="number" id="fiyat-gunluk" placeholder="500">
+      </div>
+      <div class="fgrp">
+        <label class="flbl">Uzun Konaklama (₺/gece)</label>
+        <input class="finput" type="number" id="fiyat-uzun" placeholder="350">
+      </div>
+    </div>
+    <div class="fgrp">
+      <label class="flbl">Hafta Sonu Fiyatı (₺) — isteğe bağlı</label>
+      <input class="finput" type="number" id="fiyat-haftasonu" placeholder="650">
+    </div>
+    <div class="fgrp">
+      <label class="flbl">Not</label>
+      <input class="finput" type="text" id="fiyat-not" placeholder="Sezon fiyatı, özel indirim...">
+    </div>
+    <div class="mactions">
+      <button class="mcancel" onclick="closeFiyatModal()">İptal</button>
+      <button class="mconfirm" onclick="saveFiyat()">💾 Kaydet</button>
+    </div>
+  </div>
+</div>
+
 <!-- Teknik Arıza Modal -->
 <div class="mbg" id="modal-teknik">
   <div class="msheet">
@@ -628,6 +690,7 @@ async function switchTab(tab, el){
   if(tab==='pay'){ guests=await sbSelect('guests','order=id.desc'); renderPay(); }
   if(tab==='rez'){ rez=await sbSelect('rezervasyonlar','order=id.asc'); renderRez(); }
   if(tab==='longstay'){ guests=await sbSelect('guests','order=id.desc'); renderLongStay(); }
+  if(tab==='fiyat'){ guests=await sbSelect('guests','order=id.desc'); renderFiyatlar(); }
   if(tab==='temizlik'){ guests=await sbSelect('guests','order=id.desc'); renderTemizlik(); }
   if(tab==='teknik'){ renderTeknik(); }
   if(tab==='istatistik'){ guests=await sbSelect('guests','order=id.desc'); renderIstatistik(); }
@@ -1177,6 +1240,77 @@ function renderIstatistik(){
         <div class="gright"><span class="badge ${bCls(g.status)}">${g.status}</span><div class="pay-amt">${fmt(g.amt)}</div></div>
       </div>
     </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// FİYATLAR
+// ═══════════════════════════════════════
+let fiyatlar = (()=>{ try{ const s=localStorage.getItem('dg_fiyat'); if(s) return JSON.parse(s); }catch(e){} return {}; })();
+function saveFiyatlar(){ try{ localStorage.setItem('dg_fiyat',JSON.stringify(fiyatlar)); }catch(e){} }
+
+function switchSubTab(tab, el){}
+
+function renderFiyatlar(){
+  const filter = document.getElementById('fiyat-filter').value;
+  const allRooms = [...Array.from({length:24},(_,i)=>String(101+i)),...Array.from({length:24},(_,i)=>String(201+i)),...Array.from({length:25},(_,i)=>String(301+i))];
+  let list = filter==='all' ? allRooms : allRooms.filter(r=>r.startsWith(filter));
+  const ri = r => getRoomInfo(r);
+  const occ = new Set(guests.filter(g=>g.status==='Konaklamada').map(g=>g.room));
+
+  document.getElementById('fiyat-list').innerHTML = list.map(r=>{
+    const f = fiyatlar[r]||{};
+    const info = ri(r);
+    const g = guests.find(x=>x.room===r&&x.status==='Konaklamada');
+    return `<div class="fiyat-card">
+      <div class="fiyat-room">${r}</div>
+      <div class="fiyat-info">
+        <div class="gname" style="font-size:13px">${info.type} · ${info.sqm}m² · ${info.view}</div>
+        <div class="gmeta" style="margin-top:2px">${occ.has(r)?`👤 ${g?g.name:'Dolu'}`:'🟢 Boş'}</div>
+        <div class="fiyat-prices">
+          ${f.gunluk?`<span class="fpill fp-gun">📅 ${f.gunluk.toLocaleString('tr-TR')}₺/gece</span>`:'<span class="fpill fp-yok">📅 Fiyat yok</span>'}
+          ${f.uzun?`<span class="fpill fp-uzun">🏠 ${f.uzun.toLocaleString('tr-TR')}₺/gece</span>`:'<span class="fpill fp-yok">🏠 Uzun yok</span>'}
+          ${f.haftasonu?`<span class="fpill fp-hs">🎉 ${f.haftasonu.toLocaleString('tr-TR')}₺ hs</span>`:''}
+        </div>
+        ${f.not?`<div class="gmeta" style="color:var(--text3);margin-top:3px">💬 ${f.not}</div>`:''}
+      </div>
+      <button class="abtn a-edit" style="flex:0;padding:6px 11px;font-size:12px" onclick="openFiyatModal('${r}')">✏️</button>
+    </div>`;
+  }).join('');
+}
+
+function openFiyatModal(room){
+  // Fill room select
+  const sel = document.getElementById('fiyat-room');
+  sel.innerHTML = '<option value="">Oda seç...</option>';
+  [1,2,3].forEach(f=>{ const og=document.createElement('optgroup'); og.label=f+'. Kat'; Array.from({length:f===3?25:24},(_,i)=>String(f*100+1+i)).forEach(r=>{ const o=document.createElement('option'); o.value=r; o.textContent=r; og.appendChild(o); }); sel.appendChild(og); });
+  if(room){ sel.value=room; loadRoomFiyat(); document.getElementById('fiyat-modal-title').textContent='Oda '+room+' — Fiyat'; }
+  else { document.getElementById('fiyat-modal-title').textContent='Fiyat Güncelle'; ['fiyat-gunluk','fiyat-uzun','fiyat-haftasonu','fiyat-not'].forEach(id=>document.getElementById(id).value=''); }
+  document.getElementById('modal-fiyat').classList.add('open');
+}
+
+function loadRoomFiyat(){
+  const r = document.getElementById('fiyat-room').value; if(!r) return;
+  const f = fiyatlar[r]||{};
+  document.getElementById('fiyat-gunluk').value = f.gunluk||'';
+  document.getElementById('fiyat-uzun').value = f.uzun||'';
+  document.getElementById('fiyat-haftasonu').value = f.haftasonu||'';
+  document.getElementById('fiyat-not').value = f.not||'';
+  document.getElementById('fiyat-modal-title').textContent = 'Oda '+r+' — Fiyat';
+}
+
+function closeFiyatModal(){ document.getElementById('modal-fiyat').classList.remove('open'); }
+document.getElementById('modal-fiyat').addEventListener('click',e=>{ if(e.target.id==='modal-fiyat') closeFiyatModal(); });
+
+function saveFiyat(){
+  const r = document.getElementById('fiyat-room').value;
+  if(!r){ alert('Oda seçin.'); return; }
+  fiyatlar[r] = {
+    gunluk:    parseInt(document.getElementById('fiyat-gunluk').value)||0,
+    uzun:      parseInt(document.getElementById('fiyat-uzun').value)||0,
+    haftasonu: parseInt(document.getElementById('fiyat-haftasonu').value)||0,
+    not:       document.getElementById('fiyat-not').value.trim()
+  };
+  saveFiyatlar(); closeFiyatModal(); renderFiyatlar(); toast('✓ Fiyat kaydedildi');
 }
 
 // ═══════════════════════════════════════
