@@ -691,7 +691,7 @@ async function switchTab(tab, el){
   if(tab==='rez'){ rez=await sbSelect('rezervasyonlar','order=id.asc'); renderRez(); }
   if(tab==='longstay'){ guests=await sbSelect('guests','order=id.desc'); renderLongStay(); }
   if(tab==='fiyat'){ guests=await sbSelect('guests','order=id.desc'); renderFiyatlar(); }
-  if(tab==='temizlik'){ guests=await sbSelect('guests','order=id.desc'); renderTemizlik(); }
+  if(tab==='temizlik'){ guests=await sbSelect('guests','order=id.desc'); await loadTmz(); renderTemizlik(); }
   if(tab==='teknik'){ renderTeknik(); }
   if(tab==='istatistik'){ guests=await sbSelect('guests','order=id.desc'); renderIstatistik(); }
   if(tab==='today'){ guests=await sbSelect('guests','order=id.desc'); renderToday(); }
@@ -1079,21 +1079,43 @@ function renderToday(){ const td=new Date().toLocaleDateString('tr-TR'); const o
 // ═══════════════════════════════════════
 // TEMİZLİK
 // ═══════════════════════════════════════
-let tmzData = (()=>{ try{ const s=localStorage.getItem('dg_tmz'); if(s) return JSON.parse(s); }catch(e){} const all=[...Array.from({length:24},(_,i)=>String(101+i)),...Array.from({length:24},(_,i)=>String(201+i)),...Array.from({length:25},(_,i)=>String(301+i))]; return all.map(r=>({room:r,status:'Bekliyor',time:''})); })();
-function saveTmz(){ try{ localStorage.setItem('dg_tmz',JSON.stringify(tmzData)); }catch(e){} }
+let tmzData = [];
+
+async function loadTmz(){
+  tmzData = await sbSelect('temizlik','order=room.asc');
+  if(!tmzData.length){
+    const all=[...Array.from({length:24},(_,i)=>String(101+i)),...Array.from({length:24},(_,i)=>String(201+i)),...Array.from({length:25},(_,i)=>String(301+i))];
+    tmzData = all.map(r=>({room:r,status:'Bekliyor',updated_at:''}));
+  }
+}
+
+async function saveTmz(room, status){
+  const time = new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+  await fetch(`${SB_URL}/rest/v1/temizlik?room=eq.${room}`, {
+    method:'PATCH',
+    headers:{...H,'Prefer':'return=minimal'},
+    body:JSON.stringify({status, updated_at:time})
+  });
+  const t = tmzData.find(x=>x.room===room);
+  if(t){ t.status=status; t.updated_at=time; }
+}
 
 const TMZ_ICONS={Bekliyor:'🟡',Temizleniyor:'🔵',Kontrol:'🟣',Temiz:'🟢'};
 const TMZ_CLS={Bekliyor:'tmz-bek',Temizleniyor:'tmz-tmz',Kontrol:'tmz-knt',Temiz:'tmz-ok'};
 
-function tmzResetAll(){
+async function tmzResetAll(){
   const coday=new Set(guests.filter(g=>g.status==='Check-out').map(g=>g.room));
-  tmzData.forEach(t=>{ if(coday.has(t.room)) t.status='Bekliyor'; });
-  saveTmz(); renderTemizlik(); toast('✓ Güncellendi');
+  for(const t of tmzData){
+    if(coday.has(t.room)&&t.status==='Temiz'){
+      await saveTmz(t.room,'Bekliyor');
+    }
+  }
+  renderTemizlik(); toast('✓ Güncellendi');
 }
 
-function setTmz(room,status){
-  const t=tmzData.find(x=>x.room===room);
-  if(t){ t.status=status; t.time=new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); saveTmz(); renderTemizlik(); }
+async function setTmz(room,status){
+  await saveTmz(room,status);
+  renderTemizlik();
 }
 
 function renderTemizlik(){
@@ -1111,7 +1133,7 @@ function renderTemizlik(){
       <div class="tmz-room ${TMZ_CLS[t.status]}">${t.room}</div>
       <div class="tmz-info">
         <div class="tmz-name">${TMZ_ICONS[t.status]} ${t.status}</div>
-        <div class="tmz-meta">${occ.has(t.room)?'👤 Dolu':'🟢 Boş'}${t.time?' · '+t.time:''}</div>
+        <div class="tmz-meta">${occ.has(t.room)?'👤 Dolu':'🟢 Boş'}${t.updated_at?' · '+t.updated_at:''}</div>
       </div>
       <div class="tmz-actions">
         <button class="tmz-btn${t.status==='Temizleniyor'?' active':''}" onclick="setTmz('${t.room}','Temizleniyor')">Temizleniyor</button>
@@ -1326,6 +1348,7 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 (async()=>{
   guests = await sbSelect('guests','order=id.desc');
   rez    = await sbSelect('rezervasyonlar','order=id.asc');
+  await loadTmz();
   updateStats();
   filterGuests('');
   renderRez();
