@@ -944,11 +944,17 @@ async function saveRoom(){
     sqm: parseInt(document.getElementById('rm-sqm').value)||22,
     ac: rmAc, bal: rmBal, tv: rmTV, safe: rmSafe, mbar: rmMbar
   };
-  await fetch(`${SB_URL}/rest/v1/room_infos`, {
+  const res = await fetch(`${SB_URL}/rest/v1/room_infos`, {
     method:'POST',
-    headers:{...H,'Prefer':'resolution=merge-duplicates,return=minimal'},
+    headers:{
+      'Content-Type':'application/json',
+      'apikey':SB_KEY,
+      'Authorization':'Bearer '+SB_KEY,
+      'Prefer':'resolution=merge-duplicates,return=representation'
+    },
     body: JSON.stringify(data)
   });
+  if(!res.ok){ const t=await res.text(); console.error('saveRoom error:',t); toast('❌ Kaydedilemedi'); return; }
   rooms[r] = data;
   toast('✓ Oda '+r+' kaydedildi');
   closeRoom();
