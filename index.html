@@ -576,7 +576,7 @@ const FLOORS = {
   3: Array.from({length:25},(_,i)=>String(301+i)),
 };
 const ALL_ROOMS = [...FLOORS[1],...FLOORS[2],...FLOORS[3]];
-const CLEAN_ROOMS = new Set(['103','201','224','310']);
+
 
 let guests = [];
 let rez = [];
@@ -786,7 +786,7 @@ function renderRooms(){
           let c='r-empty';
           if(occ.has(r)) c='r-occ';
           else if(coday.has(r)) c='r-co';
-          else if(CLEAN_ROOMS.has(r)) c='r-clean';
+          else if(tmzData.find(t=>t.room===r&&(t.status==='Bekliyor'||t.status==='Temizleniyor'||t.status==='Kontrol'))) c='r-clean';
           return `<div class="rcell ${c}" onclick="openRoomModal('${r}')">${r}</div>`;
         }).join('')}
       </div>
