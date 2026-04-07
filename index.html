@@ -152,7 +152,15 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .toast{position:fixed;bottom:calc(var(--sb)+75px);left:50%;transform:translateX(-50%) translateY(16px);background:var(--text);color:var(--surface);border-radius:var(--rs);padding:10px 18px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;z-index:500;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .loading{text-align:center;padding:50px;color:var(--text3);font-size:14px;}
-/* Fiyat */
+/* Log */
+.log-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:11px 13px;display:flex;align-items:flex-start;gap:10px;}
+.log-icon{width:34px;height:34px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.log-ci{background:var(--green-bg);} .log-co{background:var(--red-bg);} .log-rez{background:var(--blue-bg);} .log-upd{background:var(--amber-bg);} .log-del{background:var(--red-bg);}
+.log-info{flex:1;min-width:0;}
+.log-title{font-size:13px;font-weight:700;color:var(--text);}
+.log-detail{font-size:12px;color:var(--text2);margin-top:2px;line-height:1.5;}
+.log-time{font-size:11px;color:var(--text3);text-align:right;flex-shrink:0;white-space:nowrap;}
+
 .fiyat-card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);padding:12px 13px;display:flex;align-items:center;gap:12px;}
 .fiyat-room{width:44px;height:44px;border-radius:var(--rs);background:var(--accent-bg);border:1.5px solid var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-family:'DM Mono',monospace;color:var(--accent);flex-shrink:0;}
 .fiyat-info{flex:1;min-width:0;}
@@ -217,6 +225,7 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
     <div class="tab" onclick="switchTab('temizlik',this)">🧹 Temizlik</div>
     <div class="tab" onclick="switchTab('teknik',this)">🔧 Teknik</div>
     <div class="tab" onclick="switchTab('istatistik',this)">📊 İstatistik</div>
+    <div class="tab" onclick="switchTab('log',this)">📋 Kayıt Geçmişi</div>
     <div class="tab" onclick="switchTab('today',this)">Bugün</div>
   </div>
   <div class="content">
@@ -327,6 +336,23 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
     <div class="pane" id="pane-today">
       <div class="sec-hdr">Bugünkü İşlemler</div>
       <div class="olist" id="ops-list"></div>
+    </div>
+
+    <!-- Kayıt Geçmişi -->
+    <div class="pane" id="pane-log">
+      <div class="toolbar" style="padding-bottom:0">
+        <select class="fsel" id="log-filter" onchange="renderLog()">
+          <option value="all">Tümü</option>
+          <option value="check-in">✅ Check-in</option>
+          <option value="check-out">🚪 Check-out</option>
+          <option value="rezervasyon">📋 Rezervasyon</option>
+          <option value="guncelleme">✏️ Güncelleme</option>
+          <option value="silme">🗑️ Silme</option>
+        </select>
+        <button class="btn-new" style="font-size:12px;padding:8px 12px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd)" onclick="clearLog()">🗑️ Temizle</button>
+      </div>
+      <div class="sec-hdr" id="log-hdr">Tüm İşlemler</div>
+      <div id="log-list" style="padding:0 14px;display:flex;flex-direction:column;gap:7px;"></div>
     </div>
   </div>
 </div>
@@ -700,7 +726,7 @@ async function switchTab(tab, el){
   if(tab==='fiyat'){ guests=await sbSelect('guests','order=id.desc'); renderFiyatlar(); }
   if(tab==='temizlik'){ guests=await sbSelect('guests','order=id.desc'); await loadTmz(); renderTemizlik(); }
   if(tab==='teknik'){ renderTeknik(); }
-  if(tab==='istatistik'){ guests=await sbSelect('guests','order=id.desc'); renderIstatistik(); }
+  if(tab==='log'){ renderLog(); }
   if(tab==='today'){ guests=await sbSelect('guests','order=id.desc'); renderToday(); }
 }
 
@@ -816,9 +842,11 @@ async function saveGuest(){
   document.getElementById('ci-btn').textContent='⏳';
   if(editId!==null){
     await sbUpdate('guests',editId,data);
+    await addLog('guncelleme', data.room, fullName, `Bilgiler güncellendi — ${data.status}`);
     toast('✓ Güncellendi');
   } else {
     await sbInsert('guests',data);
+    await addLog('check-in', data.room, fullName, `Check-in yapıldı — Çıkış: ${data.checkout} — ${fmt(data.amt)}`);
     toast('✓ Check-in yapıldı');
   }
   guests=await sbSelect('guests','order=id.desc');
@@ -829,13 +857,25 @@ function openDel(id){ delId=id; const g=guests.find(x=>x.id===id); document.getE
 function closeDel(){ document.getElementById('modal-del').classList.remove('open'); delId=null; }
 document.getElementById('modal-del').addEventListener('click',e=>{ if(e.target.id==='modal-del') closeDel(); });
 async function confirmDel(){
+  const g=guests.find(x=>x.id===delId);
   await sbDelete('guests',delId);
+  if(g) await addLog('silme', g.room, g.name, `Misafir kaydı silindi`);
   guests=guests.filter(g=>g.id!==delId);
   updateStats(); filterGuests(''); closeDel(); toast('Misafir silindi');
 }
 
-async function quickCI(id){ await sbUpdate('guests',id,{status:'Konaklamada'}); guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); toast('✓ Check-in yapıldı'); }
-async function quickCO(id){ await sbUpdate('guests',id,{status:'Check-out'}); guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); toast('✓ Check-out yapıldı'); }
+async function quickCI(id){
+  const g=guests.find(x=>x.id===id);
+  await sbUpdate('guests',id,{status:'Konaklamada'});
+  if(g) await addLog('check-in', g.room, g.name, `Check-in yapıldı`);
+  guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); toast('✓ Check-in yapıldı');
+}
+async function quickCO(id){
+  const g=guests.find(x=>x.id===id);
+  await sbUpdate('guests',id,{status:'Check-out'});
+  if(g) await addLog('check-out', g.room, g.name, `Check-out yapıldı — ${g.checkin} → ${new Date().toLocaleDateString('tr-TR')}`);
+  guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); toast('✓ Check-out yapıldı');
+}
 
 // ═══════════════════════════════════════
 // ROOMS
@@ -1352,6 +1392,44 @@ function saveFiyat(){
     not:       document.getElementById('fiyat-not').value.trim()
   };
   saveFiyatlar(); closeFiyatModal(); renderFiyatlar(); toast('✓ Fiyat kaydedildi');
+}
+
+// ═══════════════════════════════════════
+// KAYIT GEÇMİŞİ (LOG)
+// ═══════════════════════════════════════
+async function addLog(islem, oda, misafir, detay){
+  const now = new Date();
+  const tarih = now.toLocaleDateString('tr-TR');
+  const saat  = now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+  await sbInsert('logs',{islem, oda:oda||'', misafir:misafir||'', detay:detay||'', tarih, saat});
+}
+
+async function renderLog(){
+  const filter = document.getElementById('log-filter').value;
+  let logs = await sbSelect('logs','order=id.desc&limit=200');
+  if(filter!=='all') logs = logs.filter(l=>l.islem===filter);
+  document.getElementById('log-hdr').textContent = `Kayıt Geçmişi (${logs.length})`;
+
+  const icons = {'check-in':'✅','check-out':'🚪','rezervasyon':'📋','guncelleme':'✏️','silme':'🗑️','uzatma':'📅','temizlik':'🧹','teknik':'🔧'};
+  const cls   = {'check-in':'log-ci','check-out':'log-co','rezervasyon':'log-rez','guncelleme':'log-upd','silme':'log-del','uzatma':'log-ci','temizlik':'log-upd','teknik':'log-del'};
+
+  document.getElementById('log-list').innerHTML = logs.length===0
+    ? `<div class="loading">Henüz kayıt yok</div>`
+    : logs.map(l=>`
+    <div class="log-card">
+      <div class="log-icon ${cls[l.islem]||'log-upd'}">${icons[l.islem]||'📝'}</div>
+      <div class="log-info">
+        <div class="log-title">${l.misafir?l.misafir+' — ':''}<span style="color:var(--accent)">Oda ${l.oda||'—'}</span></div>
+        <div class="log-detail">${l.detay||''}</div>
+      </div>
+      <div class="log-time">${l.tarih}<br>${l.saat}</div>
+    </div>`).join('');
+}
+
+async function clearLog(){
+  if(!confirm('Tüm kayıt geçmişini silmek istiyor musunuz?')) return;
+  await fetch(`${SB_URL}/rest/v1/logs?id=gt.0`,{method:'DELETE',headers:H});
+  renderLog(); toast('Geçmiş temizlendi');
 }
 
 // ═══════════════════════════════════════
