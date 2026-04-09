@@ -815,6 +815,7 @@ const pLbl = p => ({nakit:'💵 Nakit',kart:'💳 Kart',beklemede:'⏳ Beklemede
 const toISO = d => { if(!d||d==='—') return ''; const p=d.split('.'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:''; };
 const toTR  = d => { if(!d) return '—'; const p=d.split('-'); return p.length===3?`${p[2]}.${p[1]}.${p[0]}`:'—'; };
 const fmtBday = d => { try{ return new Date(d).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return d||''; } };
+const isBdayToday = d => { if(!d) return false; const p=d.split('-'); if(p.length<3) return false; const now=new Date(); return parseInt(p[1])===now.getMonth()+1&&parseInt(p[2])===now.getDate(); };
 const dateObj = d => { if(!d||d==='—') return null; const p=d.includes('.')?d.split('.'):d.split('-'); return d.includes('.')?new Date(+p[2],+p[1]-1,+p[0]):new Date(+p[0],+p[1]-1,+p[2]); };
 const daysDiff = d => { const o=dateObj(d); if(!o) return 999; return Math.round((o-new Date())/86400000); };
 const stayDays = g => { const o=dateObj(g.checkin); if(!o) return 0; return Math.floor((new Date()-o)/86400000); };
@@ -872,7 +873,7 @@ function renderGuests(list){
         <div class="ginfo">
           <div class="gname">${g.name}</div>
           <div class="gmeta">Oda <strong>${g.room}</strong> · ${g.checkin} → ${g.checkout}</div>
-          ${g.bday?`<div class="gmeta" style="color:var(--text3)">🎂 ${fmtBday(g.bday)}</div>`:''}
+          ${g.bday?`<div class="gmeta" style="color:var(--text3)">🎂 ${fmtBday(g.bday)}${isBdayToday(g.bday)?' <span style="background:#ffd93d;color:#1a1814;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700">Bugün! 🎉</span>':''}</div>`:''}
         </div>
         <div class="gright">
           <span class="badge ${bCls(g.status)}">${g.status}</span>
@@ -1559,8 +1560,19 @@ async function requestNotifPermission(){
 function checkTodayNotifications(){
   if(Notification.permission!=='granted') return;
   const td = new Date().toLocaleDateString('tr-TR');
+  const now = new Date();
+  const todayMMDD = `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
   const cikislar = guests.filter(g=>g.checkout===td&&g.status!=='Check-out');
   const girişler = guests.filter(g=>g.checkin===td&&g.status==='Bekleniyor');
+  // Doğum günleri — bday format: yyyy-MM-dd
+  const dogumlar = guests.filter(g=>{
+    if(!g.bday) return false;
+    const p = g.bday.split('-');
+    if(p.length<3) return false;
+    return `${p[1]}-${p[2]}`===todayMMDD;
+  });
+
   if(cikislar.length>0){
     new Notification('🚪 Dora Beytepe — Bugün Çıkış', {
       body: cikislar.map(g=>`Oda ${g.room} — ${g.name}`).join('\n'),
@@ -1573,6 +1585,34 @@ function checkTodayNotifications(){
       icon: '/manifest.json'
     });
   }
+  if(dogumlar.length>0){
+    new Notification('🎂 Dora Beytepe — Doğum Günü!', {
+      body: dogumlar.map(g=>`Oda ${g.room} — ${g.name}`).join('\n'),
+      icon: '/manifest.json'
+    });
+  }
+
+  // Doğum günü banner'ı göster
+  renderBirthdayBanner(dogumlar);
+}
+
+function renderBirthdayBanner(dogumlar){
+  const existing = document.getElementById('bday-banner');
+  if(existing) existing.remove();
+  if(!dogumlar||dogumlar.length===0) return;
+  const banner = document.createElement('div');
+  banner.id='bday-banner';
+  banner.style.cssText='background:linear-gradient(135deg,#ff6b6b,#ffd93d);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;';
+  banner.innerHTML=`
+    <span style="font-size:20px">🎂</span>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:700;color:#1a1814">Bugün Doğum Günü!</div>
+      <div style="font-size:12px;color:#3a2a00">${dogumlar.map(g=>`Oda ${g.room} — ${g.name}`).join(' · ')}</div>
+    </div>
+    <button onclick="document.getElementById('bday-banner').remove()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#1a1814">✕</button>`;
+  // İstatistik barının altına ekle
+  const stats = document.querySelector('.stats');
+  if(stats) stats.after(banner);
 }
 
 // ── Stat Popup ──
@@ -1860,6 +1900,13 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
   // Bildirim izni iste ve kontrol et
   await requestNotifPermission();
   setTimeout(checkTodayNotifications, 2000);
+  // Bildirim izni olmasa da banner göster
+  setTimeout(()=>{
+    const now=new Date();
+    const todayMMDD=`${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const dogumlar=guests.filter(g=>{ if(!g.bday) return false; const p=g.bday.split('-'); return p.length>=3&&`${p[1]}-${p[2]}`===todayMMDD; });
+    renderBirthdayBanner(dogumlar);
+  },1500);
 })();
 </script>
 </body>
