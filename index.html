@@ -279,7 +279,7 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
     <div class="stat red" onclick="showStatPopup('dolu')" style="cursor:pointer"><div class="sv" id="s-occ">0</div><div class="sl">Dolu Oda</div></div>
     <div class="stat" onclick="showStatPopup('bos')" style="cursor:pointer"><div class="sv" style="color:var(--green)" id="s-empty">0</div><div class="sl">Boş Oda</div></div>
     <div class="stat" onclick="showStatPopup('cikis')" style="cursor:pointer"><div class="sv" id="s-co">0</div><div class="sl">Çıkış Bugün</div></div>
-    <div class="stat"><div class="sv gold" id="s-rev">0₺</div><div class="sl">Gelir</div></div>
+    <div class="stat" onclick="showStatPopup('gelir')" style="cursor:pointer"><div class="sv gold" id="s-rev">0₺</div><div class="sl">Gelir</div></div>
   </div>
   <div class="tabs">
     <div class="tab active" onclick="switchTab('guests',this)">Misafirler</div>
@@ -1480,6 +1480,26 @@ function showStatPopup(tip){
     title=`🟡 Bugün Çıkış (${coSet.size})`;
     cls='rpill-cikis';
     rooms=guests.filter(g=>g.checkout===td&&g.status!=='Check-out').sort((a,b)=>a.room.localeCompare(b.room)).map(g=>({room:g.room,name:g.name}));
+  } else if(tip==='gelir'){
+    const odemeler = guests.filter(g=>g.pay!=='beklemede'&&g.amt>0).sort((a,b)=>a.room.localeCompare(b.room));
+    const toplam = odemeler.reduce((s,g)=>s+(g.amt||0),0);
+    title=`💰 Tahsil Edilen Gelir (${toplam.toLocaleString('tr-TR')}₺)`;
+    document.getElementById('stat-popup-title').textContent=title;
+    document.getElementById('stat-popup-content').innerHTML = odemeler.length===0
+      ? `<div style="color:var(--text3);font-size:14px">Ödeme kaydı yok</div>`
+      : odemeler.map(g=>`
+        <div style="background:var(--surface2);border-radius:var(--rs);padding:10px 12px;width:100%;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border)">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${g.name}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">Oda ${g.room} · ${g.checkin} → ${g.checkout}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:14px;font-weight:700;color:var(--accent);font-family:'DM Mono',monospace">${(g.amt||0).toLocaleString('tr-TR')}₺</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">${g.pay==='nakit'?'💵 Nakit':'💳 Kart'}</div>
+          </div>
+        </div>`).join('');
+    document.getElementById('stat-popup').classList.add('open');
+    return;
   }
 
   document.getElementById('stat-popup-title').textContent=title;
