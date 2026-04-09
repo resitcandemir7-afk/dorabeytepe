@@ -1753,13 +1753,56 @@ function showStatPopup(tip){
   document.getElementById('stat-popup-title').textContent=title;
   document.getElementById('stat-popup-content').innerHTML=rooms.length===0
     ?`<div style="color:var(--text3);font-size:14px">Gösterilecek oda yok</div>`
-    :rooms.map(r=>`
-      <div style="display:flex;flex-direction:column;align-items:center">
-        <div class="rpill ${cls}">${r.room}</div>
+    :rooms.map(r=>{
+      const ri = getRoomInfo(r.room);
+      const f  = fiyatlar[r.room]||{};
+      const clickable = tip==='bos';
+      return `<div style="display:flex;flex-direction:column;align-items:center" ${clickable?`onclick="openRoomDetailFromPopup('${r.room}')"`:''}  >
+        <div class="rpill ${cls}" style="${clickable?'cursor:pointer;':'}'}">${r.room}</div>
         ${r.name?`<div class="rpill-name">${r.name.split(' ')[0]}</div>`:''}
-      </div>`).join('');
+        ${clickable?`<div class="rpill-name" style="color:var(--text3)">${ri.type}</div>`:''}
+      </div>`;
+    }).join('');
   document.getElementById('stat-popup').classList.add('open');
 }
+
+function openRoomDetailFromPopup(r){
+  const ri  = getRoomInfo(r);
+  const f   = fiyatlar[r]||{};
+  const feats = [
+    ri.ac?'❄️ Klima':'',
+    ri.bal?'🌿 Balkon':'',
+    ri.tv?'📺 TV':'',
+    ri.safe?'🔐 Kasa':'',
+    ri.mbar?'🍷 Minibar':''
+  ].filter(Boolean).join(' · ')||'—';
+
+  // Popup içeriğini güncelle
+  document.getElementById('stat-popup-title').textContent=`Oda ${r} — Detay`;
+  document.getElementById('stat-popup-content').innerHTML=`
+    <div style="background:var(--surface2);border-radius:var(--r);padding:14px;border:1px solid var(--border);width:100%">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:48px;height:48px;border-radius:var(--rs);background:var(--green-bg);border:1.5px solid var(--green-bd);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;font-family:'DM Mono',monospace;color:var(--green)">${r}</div>
+        <div>
+          <div style="font-size:15px;font-weight:700">${ri.type}</div>
+          <div style="font-size:12px;color:var(--text2)">${ri.sqm}m² · ${ri.view} manzarası</div>
+        </div>
+        <div style="margin-left:auto"><span class="badge b-stay">🟢 Boş</span></div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">${feats}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${f.gunluk?`<span class="fpill fp-gun">📅 ${f.gunluk.toLocaleString('tr-TR')}₺/gece</span>`:'<span class="fpill fp-yok">📅 Fiyat girilmemiş</span>'}
+        ${f.uzun?`<span class="fpill fp-uzun">🏠 ${f.uzun.toLocaleString('tr-TR')}₺ uzun</span>`:''}
+        ${f.haftasonu?`<span class="fpill fp-hs">🎉 ${f.haftasonu.toLocaleString('tr-TR')}₺ hs</span>`:''}
+      </div>
+      ${f.not?`<div style="font-size:12px;color:var(--text3);margin-top:8px">💬 ${f.not}</div>`:''}
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="mconfirm" style="flex:1;padding:10px" onclick="closeStatPopup();openCI()">+ Check-in Yap</button>
+        <button class="mcancel" style="flex:1;padding:10px" onclick="closeStatPopup();openRoomModal('${r}')">⚙️ Düzenle</button>
+      </div>
+    </div>`;
+}
+
 function closeStatPopup(){ document.getElementById('stat-popup').classList.remove('open'); }
 
 // ═══════════════════════════════════════
