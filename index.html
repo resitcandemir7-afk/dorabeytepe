@@ -195,7 +195,23 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
 .itext{flex:1;font-size:13px;line-height:1.4;color:var(--text);}
 .ibtn{background:var(--accent);color:#fff;border:none;border-radius:var(--rs);padding:7px 11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .iclose{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;}
-/* Swipe check-out */
+/* Takvim */
+.tak-header{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
+.tak-day-lbl{text-align:center;font-size:11px;font-weight:700;color:var(--text2);padding:4px 0;}
+.tak-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.tak-cell{border-radius:var(--rs);padding:6px 4px;min-height:52px;border:1px solid var(--border);background:var(--surface);cursor:pointer;position:relative;transition:opacity .15s;}
+.tak-cell:active{opacity:.7;}
+.tak-cell.today{border-color:var(--accent);border-width:2px;}
+.tak-cell.empty{background:transparent;border-color:transparent;cursor:default;}
+.tak-cell.past{opacity:.6;}
+.tak-date{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:3px;}
+.tak-cell.today .tak-date{color:var(--accent);}
+.tak-bar{height:5px;border-radius:3px;margin-bottom:2px;}
+.tak-pct{font-size:9px;font-weight:700;color:var(--text3);}
+.tak-detail{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;display:none;align-items:flex-end;justify-content:center;}
+.tak-detail.open{display:flex;}
+.tak-detail-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:18px 18px calc(18px + var(--sb));max-height:75vh;overflow-y:auto;animation:su .25s ease-out;}
+
 .gcard-wrap{position:relative;overflow:hidden;border-radius:var(--r);}
 .gcard-bg{position:absolute;inset:0;background:var(--red);display:flex;align-items:center;justify-content:flex-end;padding-right:20px;border-radius:var(--r);}
 .gcard-bg-txt{color:#fff;font-size:13px;font-weight:700;}
@@ -230,6 +246,17 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
 </style>
 </head>
 <body>
+
+<!-- Takvim Gün Detay -->
+<div class="tak-detail" id="tak-detail" onclick="if(event.target===this) closeTakDetail()">
+  <div class="tak-detail-sheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="mtitle" id="tak-detail-title" style="margin:0">Gün Detayı</div>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)" onclick="closeTakDetail()">✕</button>
+    </div>
+    <div id="tak-detail-content"></div>
+  </div>
+</div>
 
 <!-- Stat Popup -->
 <div class="stat-popup" id="stat-popup" onclick="if(event.target===this) closeStatPopup()">
@@ -296,6 +323,7 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
     <div class="tab" onclick="switchTab('longstay',this)">🏠 Uzun Konaklama</div>
     <div class="tab" onclick="switchTab('temizlik',this)">🧹 Temizlik</div>
     <div class="tab" onclick="switchTab('teknik',this)">🔧 Teknik</div>
+    <div class="tab" onclick="switchTab('takvim',this)">📅 Takvim</div>
     <div class="tab" onclick="switchTab('istatistik',this)">📊 İstatistik</div>
     <div class="tab" onclick="switchTab('log',this)">📋 Kayıt Geçmişi</div>
     <div class="tab" onclick="switchTab('today',this)">Bugün</div>
@@ -394,6 +422,23 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
     </div>
 
     <!-- İstatistik -->
+    <!-- Takvim -->
+    <div class="pane" id="pane-takvim">
+      <div class="toolbar" style="padding-bottom:0;justify-content:space-between;align-items:center">
+        <button class="abtn a-edit" style="flex:0;padding:8px 14px" onclick="takvimPrev()">‹ Önceki</button>
+        <div id="takvim-title" style="font-size:15px;font-weight:700;color:var(--text)"></div>
+        <button class="abtn a-edit" style="flex:0;padding:8px 14px" onclick="takvimNext()">Sonraki ›</button>
+      </div>
+      <!-- Doluluk özet bar -->
+      <div style="padding:10px 14px 0">
+        <div id="takvim-stats" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
+      </div>
+      <!-- Takvim grid -->
+      <div style="padding:0 14px">
+        <div id="takvim-grid"></div>
+      </div>
+    </div>
+
     <div class="pane" id="pane-istatistik">
       <div class="sec-hdr">Genel Özet</div>
       <div class="psums" id="ist-sums"></div>
@@ -799,6 +844,8 @@ async function switchTab(tab, el){
   if(tab==='temizlik'){ guests=await sbSelect('guests','order=id.desc'); await loadTmz(); renderTemizlik(); }
   if(tab==='teknik'){ renderTeknik(); }
   if(tab==='log'){ renderLog(); }
+  if(tab==='takvim'){ guests=await sbSelect('guests','order=id.desc'); rez=await sbSelect('rezervasyonlar','order=id.asc'); renderTakvim(); }
+  if(tab==='istatistik'){ guests=await sbSelect('guests','order=id.desc'); renderIstatistik(); }
   if(tab==='today'){ guests=await sbSelect('guests','order=id.desc'); renderToday(); }
 }
 
@@ -1574,6 +1621,86 @@ function showStatPopup(tip){
 }
 function closeStatPopup(){ document.getElementById('stat-popup').classList.remove('open'); }
 
+// ═══════════════════════════════════════
+// DOLULUk TAKVİMİ
+// ═══════════════════════════════════════
+let takvimYear  = new Date().getFullYear();
+let takvimMonth = new Date().getMonth();
+const TOTAL_ROOMS = 73;
+const GUN_LABELS  = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+const AY_LABELS   = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+function takvimPrev(){ takvimMonth--; if(takvimMonth<0){takvimMonth=11;takvimYear--;} renderTakvim(); }
+function takvimNext(){ takvimMonth++; if(takvimMonth>11){takvimMonth=0;takvimYear++;} renderTakvim(); }
+
+function getDolulukForDate(dateStr){
+  const d = dateObj(dateStr); if(!d) return {occ:0,guests:[],rez:[]};
+  const occGuests = guests.filter(g=>{
+    if(g.status==='Bekleniyor') return false;
+    const ci=dateObj(g.checkin); const co=dateObj(g.checkout);
+    return ci&&co&&ci<=d&&co>d;
+  });
+  const rezOcc = rez.filter(r=>{
+    const ci=dateObj(r.cin); const co=dateObj(r.cout);
+    return ci&&co&&ci<=d&&co>d;
+  });
+  return {occ:occGuests.length+rezOcc.length, guests:occGuests, rez:rezOcc};
+}
+
+function renderTakvim(){
+  document.getElementById('takvim-title').textContent=`${AY_LABELS[takvimMonth]} ${takvimYear}`;
+  const firstDay=new Date(takvimYear,takvimMonth,1);
+  const lastDay=new Date(takvimYear,takvimMonth+1,0);
+  const today=new Date(); today.setHours(0,0,0,0);
+  let startOffset=firstDay.getDay()-1; if(startOffset<0) startOffset=6;
+  let totalOcc=0,totalDays=lastDay.getDate();
+  for(let d=1;d<=totalDays;d++){
+    const ds=`${String(d).padStart(2,'0')}.${String(takvimMonth+1).padStart(2,'0')}.${takvimYear}`;
+    totalOcc+=getDolulukForDate(ds).occ;
+  }
+  const avgOcc=Math.round(totalOcc/totalDays);
+  const avgPct=Math.round(avgOcc/TOTAL_ROOMS*100);
+  document.getElementById('takvim-stats').innerHTML=`
+    <div class="psum" style="flex:1"><div class="psum-val" style="color:var(--accent)">${avgPct}%</div><div class="psum-lbl">Aylık Ort.</div></div>
+    <div class="psum" style="flex:1"><div class="psum-val" style="color:var(--red)">${avgOcc}</div><div class="psum-lbl">Ort. Dolu</div></div>
+    <div class="psum" style="flex:1"><div class="psum-val" style="color:var(--green)">${TOTAL_ROOMS-avgOcc}</div><div class="psum-lbl">Ort. Boş</div></div>`;
+  let html=`<div class="tak-header">${GUN_LABELS.map(g=>`<div class="tak-day-lbl">${g}</div>`).join('')}</div><div class="tak-grid">`;
+  for(let i=0;i<startOffset;i++) html+=`<div class="tak-cell empty"></div>`;
+  for(let d=1;d<=totalDays;d++){
+    const ds=`${String(d).padStart(2,'0')}.${String(takvimMonth+1).padStart(2,'0')}.${takvimYear}`;
+    const {occ}=getDolulukForDate(ds);
+    const pct=Math.min(100,Math.round(occ/TOTAL_ROOMS*100));
+    const cellDate=new Date(takvimYear,takvimMonth,d);
+    const isToday=cellDate.getTime()===today.getTime();
+    const isPast=cellDate<today;
+    const barColor=pct<40?'#22b855':pct<70?'#e8a020':'#e83333';
+    html+=`<div class="tak-cell${isToday?' today':''}${isPast?' past':''}" onclick="openTakDetail('${ds}')">
+      <div class="tak-date">${d}</div>
+      ${occ>0?`<div class="tak-bar" style="background:${barColor};width:${pct}%"></div><div class="tak-pct">${occ}/${TOTAL_ROOMS}</div>`:`<div class="tak-pct" style="color:var(--green)">Boş</div>`}
+    </div>`;
+  }
+  html+=`</div>`;
+  document.getElementById('takvim-grid').innerHTML=html;
+}
+
+function openTakDetail(ds){
+  const {occ:occCount,guests:occGuests,rez:rezGuests}=getDolulukForDate(ds);
+  const pct=Math.round(occCount/TOTAL_ROOMS*100);
+  document.getElementById('tak-detail-title').textContent=ds+' — %'+pct+' Dolu';
+  let content='';
+  if(occGuests.length>0){
+    content+=`<div class="sec-hdr" style="padding:0 0 6px">Konaklayanlar (${occGuests.length})</div>`;
+    content+=occGuests.map(g=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)"><div class="avatar">${ini(g.name)}</div><div><div style="font-size:13px;font-weight:600">${g.name}</div><div style="font-size:12px;color:var(--text2)">Oda ${g.room} · ${g.checkin} → ${g.checkout}</div></div><div style="margin-left:auto;font-size:13px;font-weight:700;color:var(--accent)">${fmt(g.amt)}</div></div>`).join('');
+  }
+  if(rezGuests&&rezGuests.length>0){
+    content+=`<div class="sec-hdr" style="padding:12px 0 6px">Rezervasyonlar (${rezGuests.length})</div>`;
+    content+=rezGuests.map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)"><div class="avatar" style="background:var(--blue-bg);color:var(--blue)">${ini(r.name)}</div><div><div style="font-size:13px;font-weight:600">${r.name}</div><div style="font-size:12px;color:var(--text2)">Oda ${r.room} · ${r.cin} → ${r.cout}</div></div></div>`).join('');
+  }
+  if(!content) content=`<div style="color:var(--text3);font-size:14px;padding:20px 0;text-align:center">Bu gün boş — ${TOTAL_ROOMS} oda müsait</div>`;
+  document.getElementById('tak-detail-content').innerHTML=content;
+  document.getElementById('tak-detail').classList.add('open');
+}
+function closeTakDetail(){ document.getElementById('tak-detail').classList.remove('open'); }
 
 // ═══════════════════════════════════════
 async function addLog(islem, oda, misafir, detay){
