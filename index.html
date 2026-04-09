@@ -762,7 +762,7 @@ async function switchTab(tab, el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); el.classList.add('active');
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active')); document.getElementById('pane-'+tab).classList.add('active');
   if(tab==='guests'){ guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); }
-  if(tab==='rooms'){ guests=await sbSelect('guests','order=id.desc'); await loadRooms(); renderRooms(); }
+  if(tab==='rooms'){ guests=await sbSelect('guests','order=id.desc'); await loadTmz(); await loadRooms(); renderRooms(); }
   if(tab==='pay'){ guests=await sbSelect('guests','order=id.desc'); renderPay(); }
   if(tab==='rez'){ rez=await sbSelect('rezervasyonlar','order=id.asc'); renderRez(); }
   if(tab==='longstay'){ guests=await sbSelect('guests','order=id.desc'); renderLongStay(); }
