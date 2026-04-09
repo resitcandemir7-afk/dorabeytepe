@@ -325,6 +325,7 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
     <div class="tab" onclick="switchTab('teknik',this)">🔧 Teknik</div>
     <div class="tab" onclick="switchTab('takvim',this)">📅 Takvim</div>
     <div class="tab" onclick="switchTab('istatistik',this)">📊 İstatistik</div>
+    <div class="tab" onclick="switchTab('giris',this)">🔐 Giriş Geçmişi</div>
     <div class="tab" onclick="switchTab('log',this)">📋 Kayıt Geçmişi</div>
     <div class="tab" onclick="switchTab('today',this)">Bugün</div>
   </div>
@@ -453,6 +454,12 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
     <div class="pane" id="pane-today">
       <div class="sec-hdr">Bugünkü İşlemler</div>
       <div class="olist" id="ops-list"></div>
+    </div>
+
+    <!-- Giriş Geçmişi -->
+    <div class="pane" id="pane-giris">
+      <div class="sec-hdr">Uygulama Giriş Geçmişi</div>
+      <div id="giris-list" style="padding:0 14px;display:flex;flex-direction:column;gap:7px;"></div>
     </div>
 
     <!-- Kayıt Geçmişi -->
@@ -843,6 +850,7 @@ async function switchTab(tab, el){
   if(tab==='fiyat'){ guests=await sbSelect('guests','order=id.desc'); renderFiyatlar(); }
   if(tab==='temizlik'){ guests=await sbSelect('guests','order=id.desc'); await loadTmz(); renderTemizlik(); }
   if(tab==='teknik'){ renderTeknik(); }
+  if(tab==='giris'){ renderGiris(); }
   if(tab==='log'){ renderLog(); }
   if(tab==='takvim'){ guests=await sbSelect('guests','order=id.desc'); rez=await sbSelect('rezervasyonlar','order=id.asc'); renderTakvim(); }
   if(tab==='istatistik'){ guests=await sbSelect('guests','order=id.desc'); renderIstatistik(); }
@@ -1703,6 +1711,35 @@ function openTakDetail(ds){
 function closeTakDetail(){ document.getElementById('tak-detail').classList.remove('open'); }
 
 // ═══════════════════════════════════════
+// GİRİŞ GEÇMİŞİ
+// ═══════════════════════════════════════
+async function logGiris(){
+  const now = new Date();
+  const tarih = now.toLocaleDateString('tr-TR');
+  const saat  = now.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+  const ua = navigator.userAgent;
+  const cihaz = ua.includes('iPhone')?'📱 iPhone':
+                ua.includes('Android')?'📱 Android':
+                ua.includes('Mobile')?'📱 Mobil':'💻 Bilgisayar';
+  await sbInsert('giris_gecmisi',{tarih, saat, cihaz});
+}
+
+async function renderGiris(){
+  const list = await sbSelect('giris_gecmisi','order=id.desc&limit=100');
+  document.getElementById('giris-list').innerHTML = list.length===0
+    ? `<div class="loading">Henüz giriş kaydı yok</div>`
+    : list.map(g=>`
+      <div class="log-card">
+        <div class="log-icon" style="background:var(--blue-bg);font-size:20px">${g.cihaz.startsWith('📱')?'📱':'💻'}</div>
+        <div class="log-info">
+          <div class="log-title">Uygulama Girişi</div>
+          <div class="log-detail">${g.cihaz}</div>
+        </div>
+        <div class="log-time">${g.tarih}<br>${g.saat}</div>
+      </div>`).join('');
+}
+
+// ═══════════════════════════════════════
 async function addLog(islem, oda, misafir, detay){
   const now = new Date();
   const tarih = now.toLocaleDateString('tr-TR');
@@ -1811,6 +1848,8 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 // Boot
 (async()=>{
   await loadPin();
+  // PIN doğrulandıktan sonra giriş logla
+  await logGiris();
   guests = await sbSelect('guests','order=id.desc');
   rez    = await sbSelect('rezervasyonlar','order=id.asc');
   await loadTmz();
