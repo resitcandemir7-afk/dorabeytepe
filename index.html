@@ -334,6 +334,7 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
     <div class="tab" onclick="switchTab('istatistik',this)">📊 İstatistik</div>
     <div class="tab" onclick="switchTab('giris',this)">🔐 Giriş Geçmişi</div>
     <div class="tab" onclick="switchTab('log',this)">📋 Kayıt Geçmişi</div>
+    <div class="tab" onclick="switchTab('rapor',this)">📊 Günlük Rapor</div>
     <div class="tab" onclick="switchTab('today',this)">Bugün</div>
   </div>
   <div class="content">
@@ -456,6 +457,15 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
       <div id="ist-occ" style="padding:0 14px"></div>
       <div class="sec-hdr" style="margin-top:10px">Son Eklenen Misafirler</div>
       <div class="glist" id="ist-recent"></div>
+    </div>
+
+    <!-- Günlük Rapor -->
+    <div class="pane" id="pane-rapor">
+      <div class="toolbar" style="padding-bottom:0;align-items:center;justify-content:space-between">
+        <input type="date" class="fsel" id="rapor-tarih" onchange="renderRapor()">
+        <button class="btn-new" style="font-size:12px;padding:8px 12px" onclick="document.getElementById('rapor-tarih').value=new Date().toISOString().split('T')[0];renderRapor()">Bugün</button>
+      </div>
+      <div id="rapor-content" style="padding:0 14px"></div>
     </div>
 
     <div class="pane" id="pane-today">
@@ -862,6 +872,13 @@ async function switchTab(tab, el){
   if(tab==='log'){ renderLog(); }
   if(tab==='takvim'){ guests=await sbSelect('guests','order=id.desc'); rez=await sbSelect('rezervasyonlar','order=id.asc'); renderTakvim(); }
   if(tab==='istatistik'){ guests=await sbSelect('guests','order=id.desc'); renderIstatistik(); }
+  if(tab==='rapor'){
+    guests=await sbSelect('guests','order=id.desc');
+    rez=await sbSelect('rezervasyonlar','order=id.asc');
+    const el=document.getElementById('rapor-tarih');
+    if(!el.value) el.value=new Date().toISOString().split('T')[0];
+    renderRapor();
+  }
   if(tab==='today'){ guests=await sbSelect('guests','order=id.desc'); renderToday(); }
 }
 
@@ -1277,6 +1294,75 @@ async function delLsPay(gid,idx){ const g=guests.find(x=>x.id===gid); if(!g||!g.
 // ═══════════════════════════════════════
 // TODAY
 // ═══════════════════════════════════════
+function renderRapor(){
+  const isoDate = document.getElementById('rapor-tarih').value;
+  if(!isoDate) return;
+  const trDate = toTR(isoDate);
+  const dateLabel = new Date(isoDate).toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  // O gün giriş yapanlar
+  const girenler = guests.filter(g=>g.checkin===trDate);
+  // O gün çıkış yapanlar
+  const cikanlar = guests.filter(g=>g.checkout===trDate);
+  // O gün konaklayanlar (giriş≤tarih<çıkış)
+  const konaklayanlar = guests.filter(g=>{
+    const ci=dateObj(g.checkin); const co=dateObj(g.checkout); const d=dateObj(trDate);
+    return ci&&co&&d&&ci<=d&&co>d;
+  });
+  // O günkü gelir (o gün giriş yapanların tutarları)
+  const gunGelir = girenler.filter(g=>g.pay!=='beklemede').reduce((s,g)=>s+(g.amt||0),0);
+  const gunBekleyen = girenler.filter(g=>g.pay==='beklemede').reduce((s,g)=>s+(g.amt||0),0);
+  // Rezervasyonlar
+  const gunRez = rez.filter(r=>r.cin===trDate);
+  const doluluk = Math.round(konaklayanlar.length/73*100);
+
+  document.getElementById('rapor-content').innerHTML=`
+    <div style="margin:12px 0 8px;font-size:15px;font-weight:700;color:var(--text)">${dateLabel}</div>
+
+    <div class="psums" style="margin-bottom:8px">
+      <div class="psum"><div class="psum-val" style="color:var(--red)">${konaklayanlar.length}</div><div class="psum-lbl">Dolu Oda</div></div>
+      <div class="psum"><div class="psum-val" style="color:var(--green)">${73-konaklayanlar.length}</div><div class="psum-lbl">Boş Oda</div></div>
+      <div class="psum"><div class="psum-val" style="color:var(--accent)">%${doluluk}</div><div class="psum-lbl">Doluluk</div></div>
+    </div>
+
+    <div class="psums" style="margin-bottom:12px">
+      <div class="psum"><div class="psum-val" style="color:var(--green)">${gunGelir.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">💰 Tahsil</div></div>
+      <div class="psum"><div class="psum-val" style="color:var(--amber)">${gunBekleyen.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">⏳ Bekleyen</div></div>
+      <div class="psum"><div class="psum-val" style="color:var(--blue)">${girenler.length}</div><div class="psum-lbl">✅ Giriş</div></div>
+    </div>
+
+    ${girenler.length>0?`
+    <div class="sec-hdr">✅ Giriş Yapanlar (${girenler.length})</div>
+    ${girenler.map(g=>`
+      <div class="ocard" style="margin-bottom:6px">
+        <div class="oicon oi-in">🔑</div>
+        <div class="oinfo"><div class="oname">${g.name}</div><div class="odet">Oda ${g.room} · Çıkış: ${g.checkout}</div></div>
+        <div class="oright"><div style="font-size:13px;font-weight:700;color:var(--accent)">${fmt(g.amt)}</div><span class="pbadge ${pCls(g.pay)}" style="font-size:10px">${pLbl(g.pay)}</span></div>
+      </div>`).join('')}`:''}
+
+    ${cikanlar.length>0?`
+    <div class="sec-hdr" style="margin-top:10px">🚪 Çıkış Yapanlar (${cikanlar.length})</div>
+    ${cikanlar.map(g=>`
+      <div class="ocard" style="margin-bottom:6px">
+        <div class="oicon oi-out">🧳</div>
+        <div class="oinfo"><div class="oname">${g.name}</div><div class="odet">Oda ${g.room} · Giriş: ${g.checkin}</div></div>
+        <div class="oright"><div style="font-size:13px;font-weight:700;color:var(--accent)">${fmt(g.amt)}</div></div>
+      </div>`).join('')}`:''}
+
+    ${gunRez.length>0?`
+    <div class="sec-hdr" style="margin-top:10px">📋 Rezervasyonlar (${gunRez.length})</div>
+    ${gunRez.map(r=>`
+      <div class="ocard" style="margin-bottom:6px">
+        <div class="oicon" style="background:var(--blue-bg)">📋</div>
+        <div class="oinfo"><div class="oname">${r.name}</div><div class="odet">Oda ${r.room} · ${r.cin} → ${r.cout}</div></div>
+        ${r.deposit?`<div class="oright"><div style="font-size:13px;font-weight:700;color:var(--accent)">${r.deposit.toLocaleString('tr-TR')}₺ ön</div></div>`:''}
+      </div>`).join('')}`:''}
+
+    ${girenler.length===0&&cikanlar.length===0&&gunRez.length===0?`
+    <div class="loading" style="margin-top:30px">Bu tarihte işlem kaydı bulunamadı</div>`:''}
+  `;
+}
+
 function renderToday(){ const td=new Date().toLocaleDateString('tr-TR'); const ops=guests.filter(g=>g.checkin===td||g.checkout===td).map(g=>({name:g.name,room:g.room,id:g.id,op:g.checkin===td?'checkin':'checkout',done:g.status==='Check-out'||(g.status==='Konaklamada'&&g.checkin!==td)})); document.getElementById('ops-list').innerHTML=ops.length===0?`<div class="loading">Bugün işlem yok</div>`:ops.map(op=>`<div class="ocard"><div class="oicon ${op.op==='checkin'?'oi-in':'oi-out'}">${op.op==='checkin'?'🔑':'🧳'}</div><div class="oinfo"><div class="oname">${op.name}</div><div class="odet">Oda ${op.room} · ${op.op==='checkin'?'Check-in':'Check-out'}</div></div><div class="oright"><div class="${op.done?'os-done':'os-pend'}">${op.done?'✓ Tamamlandı':'● Bekliyor'}</div><button class="abtn a-edit" style="margin-top:5px;flex:0;padding:4px 9px;font-size:11px" onclick="openEdit(${op.id})">Düzenle</button></div></div>`).join(''); }
 
 // ═══════════════════════════════════════
@@ -1883,6 +1969,11 @@ async function clearLog(){
 // ═══════════════════════════════════════
 let pinInput = '';
 let correctPin = '1234';
+let pinHataCount = 0;
+let pinKilitli = false;
+let pinKilitBitis = 0;
+let oturumTimer = null;
+const OTURUM_SURE = 30 * 60 * 1000; // 30 dakika
 
 async function loadPin(){
   const data = await sbSelect('ayarlar');
@@ -1899,7 +1990,32 @@ async function savePin(newPin){
   correctPin = newPin;
 }
 
+// Otomatik oturum kapatma
+function resetOturumTimer(){
+  clearTimeout(oturumTimer);
+  oturumTimer = setTimeout(()=>{
+    document.getElementById('pin-screen').classList.remove('hidden');
+    pinInput=''; updatePinDots();
+    document.getElementById('pin-error').textContent='⏰ 30 dakika işlem yapılmadı. Lütfen PIN girin.';
+  }, OTURUM_SURE);
+}
+
+// Kullanıcı aktivitesi olduğunda timer'ı sıfırla
+['touchstart','mousedown','keydown','scroll'].forEach(ev=>{
+  document.addEventListener(ev, resetOturumTimer, {passive:true});
+});
+
 function pinPress(d){
+  if(pinKilitli){
+    const kalan = Math.ceil((pinKilitBitis - Date.now())/1000);
+    if(kalan > 0){
+      document.getElementById('pin-error').textContent=`🔒 ${Math.ceil(kalan/60)} dakika ${kalan%60} saniye kilitli`;
+      return;
+    } else {
+      pinKilitli=false; pinHataCount=0;
+      document.getElementById('pin-error').textContent='';
+    }
+  }
   if(pinInput.length>=4) return;
   pinInput+=d;
   updatePinDots();
@@ -1909,7 +2025,7 @@ function pinPress(d){
 function pinDel(){
   pinInput=pinInput.slice(0,-1);
   updatePinDots();
-  document.getElementById('pin-error').textContent='';
+  if(!pinKilitli) document.getElementById('pin-error').textContent='';
 }
 
 function updatePinDots(){
@@ -1922,10 +2038,29 @@ function checkPin(){
   if(pinInput===correctPin){
     document.getElementById('pin-screen').classList.add('hidden');
     document.getElementById('pin-error').textContent='';
+    pinHataCount=0; pinKilitli=false;
+    resetOturumTimer();
   } else {
-    document.getElementById('pin-error').textContent='Hatalı PIN, tekrar deneyin.';
-    pinInput='';
-    updatePinDots();
+    pinHataCount++;
+    pinInput=''; updatePinDots();
+    if(pinHataCount>=3){
+      pinKilitli=true;
+      pinKilitBitis = Date.now() + 5*60*1000;
+      document.getElementById('pin-error').textContent='🔒 3 hatalı giriş! 5 dakika kilitlendi.';
+      // Kilidi geri say
+      const interval = setInterval(()=>{
+        const kalan = Math.ceil((pinKilitBitis - Date.now())/1000);
+        if(kalan<=0){
+          clearInterval(interval);
+          pinKilitli=false; pinHataCount=0;
+          document.getElementById('pin-error').textContent='';
+        } else {
+          document.getElementById('pin-error').textContent=`🔒 ${Math.floor(kalan/60)}:${String(kalan%60).padStart(2,'0')} kilitli`;
+        }
+      },1000);
+    } else {
+      document.getElementById('pin-error').textContent=`Hatalı PIN. ${3-pinHataCount} hakkınız kaldı.`;
+    }
   }
 }
 
