@@ -195,7 +195,19 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
 .itext{flex:1;font-size:13px;line-height:1.4;color:var(--text);}
 .ibtn{background:var(--accent);color:#fff;border:none;border-radius:var(--rs);padding:7px 11px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .iclose{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;}
-/* PIN Ekranı */
+/* Stat Popup */
+.stat-popup{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;align-items:flex-end;justify-content:center;}
+.stat-popup.open{display:flex;}
+.stat-popup-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:520px;padding:18px 18px calc(18px + var(--sb));max-height:70vh;overflow-y:auto;animation:su .25s ease-out;}
+.stat-popup-title{font-size:16px;font-weight:700;margin-bottom:14px;color:var(--text);display:flex;align-items:center;justify-content:space-between;}
+.stat-popup-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);}
+.room-pills{display:flex;flex-wrap:wrap;gap:7px;}
+.rpill{padding:6px 12px;border-radius:var(--rs);font-size:13px;font-weight:700;font-family:'DM Mono',monospace;}
+.rpill-dolu{background:#ffd0d0;color:#9e0f0f;border:1.5px solid #e83333;}
+.rpill-bos{background:#c8f5d8;color:#0a6b2e;border:1.5px solid #22b855;}
+.rpill-cikis{background:#ffe9b0;color:#8a5000;border:1.5px solid #e8a020;}
+.rpill-name{font-size:11px;color:var(--text2);margin-top:3px;font-weight:500;}
+
 .pin-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;}
 .pin-screen.hidden{display:none;}
 .pin-brand{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px;}
@@ -212,6 +224,17 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
 </style>
 </head>
 <body>
+
+<!-- Stat Popup -->
+<div class="stat-popup" id="stat-popup" onclick="if(event.target===this) closeStatPopup()">
+  <div class="stat-popup-sheet">
+    <div class="stat-popup-title">
+      <span id="stat-popup-title">Odalar</span>
+      <button class="stat-popup-close" onclick="closeStatPopup()">✕</button>
+    </div>
+    <div class="room-pills" id="stat-popup-content"></div>
+  </div>
+</div>
 
 <!-- PIN Ekranı -->
 <div class="pin-screen" id="pin-screen">
@@ -253,9 +276,9 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
     <button class="btn-new" onclick="openCI()">+ Check-in</button>
   </div>
   <div class="stats">
-    <div class="stat red"><div class="sv" id="s-occ">0</div><div class="sl">Dolu Oda</div></div>
-    <div class="stat"><div class="sv" style="color:var(--green)" id="s-empty">0</div><div class="sl">Boş Oda</div></div>
-    <div class="stat"><div class="sv" id="s-co">0</div><div class="sl">Çıkış Bugün</div></div>
+    <div class="stat red" onclick="showStatPopup('dolu')" style="cursor:pointer"><div class="sv" id="s-occ">0</div><div class="sl">Dolu Oda</div></div>
+    <div class="stat" onclick="showStatPopup('bos')" style="cursor:pointer"><div class="sv" style="color:var(--green)" id="s-empty">0</div><div class="sl">Boş Oda</div></div>
+    <div class="stat" onclick="showStatPopup('cikis')" style="cursor:pointer"><div class="sv" id="s-co">0</div><div class="sl">Çıkış Bugün</div></div>
     <div class="stat"><div class="sv gold" id="s-rev">0₺</div><div class="sl">Gelir</div></div>
   </div>
   <div class="tabs">
@@ -1437,8 +1460,41 @@ function saveFiyat(){
   saveFiyatlar(); closeFiyatModal(); renderFiyatlar(); toast('✓ Fiyat kaydedildi');
 }
 
-// ═══════════════════════════════════════
-// KAYIT GEÇMİŞİ (LOG)
+// ── Stat Popup ──
+function showStatPopup(tip){
+  const occSet = new Set(guests.filter(g=>g.status==='Konaklamada').map(g=>g.room));
+  const td = new Date().toLocaleDateString('tr-TR');
+  const coSet = new Set(guests.filter(g=>g.checkout===td&&g.status!=='Check-out').map(g=>g.room));
+
+  let title='', rooms=[], cls='';
+  if(tip==='dolu'){
+    title=`🔴 Dolu Odalar (${occSet.size})`;
+    cls='rpill-dolu';
+    rooms=guests.filter(g=>g.status==='Konaklamada').sort((a,b)=>a.room.localeCompare(b.room)).map(g=>({room:g.room,name:g.name}));
+  } else if(tip==='bos'){
+    const bosRooms=ALL_ROOMS.filter(r=>!occSet.has(r));
+    title=`🟢 Boş Odalar (${bosRooms.length})`;
+    cls='rpill-bos';
+    rooms=bosRooms.sort().map(r=>({room:r,name:''}));
+  } else if(tip==='cikis'){
+    title=`🟡 Bugün Çıkış (${coSet.size})`;
+    cls='rpill-cikis';
+    rooms=guests.filter(g=>g.checkout===td&&g.status!=='Check-out').sort((a,b)=>a.room.localeCompare(b.room)).map(g=>({room:g.room,name:g.name}));
+  }
+
+  document.getElementById('stat-popup-title').textContent=title;
+  document.getElementById('stat-popup-content').innerHTML=rooms.length===0
+    ?`<div style="color:var(--text3);font-size:14px">Gösterilecek oda yok</div>`
+    :rooms.map(r=>`
+      <div style="display:flex;flex-direction:column;align-items:center">
+        <div class="rpill ${cls}">${r.room}</div>
+        ${r.name?`<div class="rpill-name">${r.name.split(' ')[0]}</div>`:''}
+      </div>`).join('');
+  document.getElementById('stat-popup').classList.add('open');
+}
+function closeStatPopup(){ document.getElementById('stat-popup').classList.remove('open'); }
+
+
 // ═══════════════════════════════════════
 async function addLog(islem, oda, misafir, detay){
   const now = new Date();
