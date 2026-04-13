@@ -1043,7 +1043,8 @@ async function quickCO(id){
 // ═══════════════════════════════════════
 function renderRooms(){
   const occ  = new Set(guests.filter(g=>g.status==='Konaklamada').map(g=>g.room));
-  const coday= new Set(guests.filter(g=>g.status==='Check-out').map(g=>g.room));
+  const td   = new Date().toLocaleDateString('tr-TR');
+  const coday= new Set(guests.filter(g=>g.checkout===td&&g.status==='Konaklamada').map(g=>g.room));
   document.getElementById('floors').innerHTML=
     `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 0 4px">
       <div class="psum"><div class="psum-val" style="color:var(--red)">${occ.size}</div><div class="psum-lbl">🔴 Dolu</div></div>
