@@ -531,6 +531,7 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
       <div class="ptoggle">
         <button class="popt sel" id="ci-cash" onclick="selPay('nakit')">💵 Nakit</button>
         <button class="popt" id="ci-card" onclick="selPay('kart')">💳 Kart</button>
+        <button class="popt" id="ci-iban" onclick="selPay('iban')">🏦 IBAN</button>
         <button class="popt" id="ci-pend" onclick="selPay('beklemede')">⏳ Beklemede</button>
       </div>
     </div>
@@ -827,8 +828,8 @@ let editRoomId=null, rmType='Çift Kişilik', rmView='Bahçe', rmAc=true, rmBal=
 const ini  = n => n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
 const fmt  = a => a>0 ? a.toLocaleString('tr-TR')+'₺' : '—';
 const bCls = s => ({Konaklamada:'b-stay','Check-out':'b-out',Bekleniyor:'b-wait'}[s]||'');
-const pCls = p => ({nakit:'p-cash',kart:'p-card',beklemede:'p-pend'}[p]||'p-pend');
-const pLbl = p => ({nakit:'💵 Nakit',kart:'💳 Kart',beklemede:'⏳ Beklemede'}[p]||'—');
+const pCls = p => ({nakit:'p-cash',kart:'p-card',iban:'p-card',beklemede:'p-pend'}[p]||'p-pend');
+const pLbl = p => ({nakit:'💵 Nakit',kart:'💳 Kart',iban:'🏦 IBAN',beklemede:'⏳ Beklemede'}[p]||'—');
 const toISO = d => { if(!d||d==='—') return ''; const p=d.split('.'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:''; };
 const toTR  = d => { if(!d) return '—'; const p=d.split('-'); return p.length===3?`${p[2]}.${p[1]}.${p[0]}`:'—'; };
 const fmtBday = d => { try{ return new Date(d).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return d||''; } };
@@ -952,7 +953,7 @@ function fillRoomSel(selId, currentRoom){
 
 function selPay(t){
   ciPay=t;
-  ['cash','card','pend'].forEach(k=>{ const m={cash:'nakit',card:'kart',pend:'beklemede'}; document.getElementById('ci-'+k).classList.toggle('sel',m[k]===t); });
+  ['cash','card','iban','pend'].forEach(k=>{ const m={cash:'nakit',card:'kart',iban:'iban',pend:'beklemede'}; document.getElementById('ci-'+k).classList.toggle('sel',m[k]===t); });
 }
 
 function openCI(){
@@ -1169,10 +1170,12 @@ async function saveRoom(){
 function renderPay(){
   const cash=guests.filter(g=>g.pay==='nakit').reduce((s,g)=>s+(g.amt||0),0);
   const card=guests.filter(g=>g.pay==='kart').reduce((s,g)=>s+(g.amt||0),0);
+  const iban=guests.filter(g=>g.pay==='iban').reduce((s,g)=>s+(g.amt||0),0);
   const pend=guests.filter(g=>g.pay==='beklemede').reduce((s,g)=>s+(g.amt||0),0);
   document.getElementById('pay-sums').innerHTML=`
     <div class="psum"><div class="psum-val" style="color:var(--green)">${cash.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">💵 Nakit</div></div>
     <div class="psum"><div class="psum-val" style="color:var(--blue)">${card.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">💳 Kart</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--blue)">${iban.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">🏦 IBAN</div></div>
     <div class="psum"><div class="psum-val" style="color:var(--amber)">${pend.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">⏳ Bekleyen</div></div>`;
   document.getElementById('pay-list').innerHTML=guests.map(g=>`
     <div class="gcard">
@@ -1525,9 +1528,11 @@ function renderIstatistik(){
 
   const cash=guests.filter(g=>g.pay==='nakit').reduce((s,g)=>s+(g.amt||0),0);
   const card=guests.filter(g=>g.pay==='kart').reduce((s,g)=>s+(g.amt||0),0);
+  const ibanAmt=guests.filter(g=>g.pay==='iban').reduce((s,g)=>s+(g.amt||0),0);
   document.getElementById('ist-pay').innerHTML=`
     <div class="psum"><div class="psum-val" style="color:var(--green)">${cash.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">💵 Nakit</div></div>
     <div class="psum"><div class="psum-val" style="color:var(--blue)">${card.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">💳 Kart</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--blue)">${ibanAmt.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">🏦 IBAN</div></div>
     <div class="psum"><div class="psum-val" style="color:var(--amber)">${pend.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">⏳ Bekleyen</div></div>`;
 
   document.getElementById('ist-occ').innerHTML=`
@@ -1744,7 +1749,7 @@ function showStatPopup(tip){
           </div>
           <div style="text-align:right">
             <div style="font-size:14px;font-weight:700;color:var(--accent);font-family:'DM Mono',monospace">${(g.amt||0).toLocaleString('tr-TR')}₺</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:2px">${g.pay==='nakit'?'💵 Nakit':'💳 Kart'}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:2px">${pLbl(g.pay)}</div>
           </div>
         </div>`).join('');
     document.getElementById('stat-popup').classList.add('open');
