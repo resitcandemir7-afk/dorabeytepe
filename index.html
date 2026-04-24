@@ -1276,10 +1276,12 @@ function sorgula(){
   const doluOdalar = new Set();
   guests.forEach(g=>{
     if(g.status==='Check-out') return;
+    if(!g.checkout||g.checkout==='—') { doluOdalar.add(g.room); return; } // çıkışı belli olmayan = dolu say
     const ci=dateObj(g.checkin); const co=dateObj(g.checkout);
     if(ci&&co&&cin<co&&cout>ci) doluOdalar.add(g.room);
   });
   rez.forEach(r=>{
+    if(!r.cout||r.cout==='—') { doluOdalar.add(r.room); return; }
     const ci=dateObj(r.cin); const co=dateObj(r.cout);
     if(ci&&co&&cin<co&&cout>ci) doluOdalar.add(r.room);
   });
