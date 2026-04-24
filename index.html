@@ -381,6 +381,33 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
       <div class="glist" id="pay-list"></div>
     </div>
     <div class="pane" id="pane-rez">
+      <!-- Müsaitlik Sorgula -->
+      <div style="margin:10px 14px 0;background:var(--accent-bg);border:1.5px solid var(--accent);border-radius:var(--r);padding:13px">
+        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:10px">🔍 Müsaitlik Sorgula</div>
+        <div class="frow" style="margin-bottom:8px">
+          <div class="fgrp" style="margin:0">
+            <label class="flbl">Giriş Tarihi</label>
+            <input class="finput" type="date" id="sq-cin">
+          </div>
+          <div class="fgrp" style="margin:0">
+            <label class="flbl">Çıkış Tarihi</label>
+            <input class="finput" type="date" id="sq-cout">
+          </div>
+        </div>
+        <div class="fgrp" style="margin-bottom:10px">
+          <label class="flbl">Oda Tipi (isteğe bağlı)</label>
+          <select class="finput" id="sq-tip">
+            <option value="">Tüm Tipler</option>
+            <option>Tek Kişilik</option>
+            <option>Çift Kişilik</option>
+            <option>2 Tek Yataklı</option>
+            <option>Suite</option>
+          </select>
+        </div>
+        <button class="mconfirm" style="width:100%;padding:11px" onclick="sorgula()">🔍 Müsait Odaları Göster</button>
+        <div id="sq-result" style="margin-top:10px"></div>
+      </div>
+
       <div id="rez-alerts"></div>
       <div class="toolbar" style="padding-bottom:0">
         <select class="fsel" id="rez-filter" onchange="renderRez()">
@@ -1232,6 +1259,85 @@ async function confirmExt(){
 // ═══════════════════════════════════════
 // REZERVASYON
 // ═══════════════════════════════════════
+function sorgula(){
+  const cinISO  = document.getElementById('sq-cin').value;
+  const coutISO = document.getElementById('sq-cout').value;
+  const tip     = document.getElementById('sq-tip').value;
+  const res     = document.getElementById('sq-result');
+
+  if(!cinISO||!coutISO){ res.innerHTML=`<div style="color:var(--red);font-size:13px">⚠️ Lütfen giriş ve çıkış tarihini girin.</div>`; return; }
+  if(cinISO>=coutISO){ res.innerHTML=`<div style="color:var(--red);font-size:13px">⚠️ Çıkış tarihi girişten sonra olmalı.</div>`; return; }
+
+  const cin  = new Date(cinISO);
+  const cout = new Date(coutISO);
+  const nights = Math.round((cout-cin)/86400000);
+
+  // Dolu odaları bul (guests + rezervasyonlar)
+  const doluOdalar = new Set();
+  guests.forEach(g=>{
+    if(g.status==='Check-out') return;
+    const ci=dateObj(g.checkin); const co=dateObj(g.checkout);
+    if(ci&&co&&cin<co&&cout>ci) doluOdalar.add(g.room);
+  });
+  rez.forEach(r=>{
+    const ci=dateObj(r.cin); const co=dateObj(r.cout);
+    if(ci&&co&&cin<co&&cout>ci) doluOdalar.add(r.room);
+  });
+
+  // Müsait odaları filtrele
+  let musaitOdalar = ALL_ROOMS.filter(r=>!doluOdalar.has(r));
+
+  // Oda tipine göre filtrele
+  if(tip){
+    musaitOdalar = musaitOdalar.filter(r=>{
+      const ri = getRoomInfo(r);
+      return ri.type === tip;
+    });
+  }
+
+  const cinTR  = toTR(cinISO);
+  const coutTR = toTR(coutISO);
+
+  if(musaitOdalar.length===0){
+    res.innerHTML=`
+      <div style="background:var(--red-bg);border:1px solid var(--red-bd);border-radius:var(--rs);padding:11px;text-align:center">
+        <div style="font-size:15px;font-weight:700;color:var(--red)">❌ Müsait Oda Yok</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">${cinTR} – ${coutTR} tarihleri${tip?' ('+tip+')':''} için müsait oda bulunamadı.</div>
+      </div>`;
+    return;
+  }
+
+  res.innerHTML=`
+    <div style="background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--rs);padding:11px;margin-bottom:8px">
+      <div style="font-size:14px;font-weight:700;color:var(--green)">✅ ${musaitOdalar.length} Müsait Oda Bulundu</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:2px">${cinTR} – ${coutTR} · ${nights} gece${tip?' · '+tip:''}</div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:7px">
+      ${musaitOdalar.map(r=>{
+        const ri = getRoomInfo(r);
+        const f  = fiyatlar[r]||{};
+        const fiyat = f.gunluk ? (f.gunluk*nights).toLocaleString('tr-TR')+'₺' : '—';
+        return `<div onclick="sqOdaSec('${r}','${cinISO}','${coutISO}')" style="background:var(--surface);border:1.5px solid var(--green-bd);border-radius:var(--rs);padding:8px 10px;cursor:pointer;text-align:center;min-width:70px">
+          <div style="font-size:13px;font-weight:800;color:var(--green);font-family:'DM Mono',monospace">${r}</div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px">${ri.type}</div>
+          <div style="font-size:10px;color:var(--text2)">${ri.sqm}m² · ${ri.view}</div>
+          ${f.gunluk?`<div style="font-size:11px;font-weight:700;color:var(--accent);margin-top:3px">${fiyat}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function sqOdaSec(room, cinISO, coutISO){
+  // Direkt rezervasyon modalını o oda seçili olarak aç
+  openRezModal();
+  setTimeout(()=>{
+    document.getElementById('rz-room').value = room;
+    document.getElementById('rz-cin').value  = cinISO;
+    document.getElementById('rz-cout').value = coutISO;
+    checkRezConflict();
+  }, 300);
+}
+
 function isRoomConflict(room,cinISO,coutISO,skipId){
   const cin=new Date(cinISO); const cout=new Date(coutISO);
   const gc=guests.find(g=>g.room===room&&g.status!=='Check-out'&&(()=>{ const i=dateObj(g.checkin); const o=dateObj(g.checkout); return i&&o&&cin<o&&cout>i; })());
