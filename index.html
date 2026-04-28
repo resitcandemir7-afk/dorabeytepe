@@ -885,7 +885,8 @@ function updateStats(){
   document.getElementById('s-empty').textContent = ALL_ROOMS.filter(r=>!occSet.has(r)).length;
   const td = new Date().toLocaleDateString('tr-TR');
   document.getElementById('s-co').textContent    = guests.filter(g=>g.checkout===td&&g.status!=='Check-out').length;
-  const rev = guests.filter(g=>g.pay!=='beklemede').reduce((s,g)=>s+(g.amt||0),0);
+  const rev = guests.filter(g=>g.pay!=='beklemede').reduce((s,g)=>s+(g.amt||0),0)
+             + rez.filter(r=>r.deposit>0).reduce((s,r)=>s+(r.deposit||0),0);
   document.getElementById('s-rev').textContent   = rev.toLocaleString('tr-TR')+'₺';
 }
 
@@ -1895,22 +1896,36 @@ function showStatPopup(tip){
     rooms=guests.filter(g=>g.checkout===td&&g.status!=='Check-out').sort((a,b)=>a.room.localeCompare(b.room)).map(g=>({room:g.room,name:g.name}));
   } else if(tip==='gelir'){
     const odemeler = guests.filter(g=>g.pay!=='beklemede'&&g.amt>0).sort((a,b)=>a.room.localeCompare(b.room));
-    const toplam = odemeler.reduce((s,g)=>s+(g.amt||0),0);
+    const rezOdemeler = rez.filter(r=>r.deposit>0).sort((a,b)=>a.room.localeCompare(b.room));
+    const toplam = odemeler.reduce((s,g)=>s+(g.amt||0),0) + rezOdemeler.reduce((s,r)=>s+(r.deposit||0),0);
     title=`💰 Tahsil Edilen Gelir (${toplam.toLocaleString('tr-TR')}₺)`;
     document.getElementById('stat-popup-title').textContent=title;
-    document.getElementById('stat-popup-content').innerHTML = odemeler.length===0
+    document.getElementById('stat-popup-content').innerHTML = (odemeler.length===0&&rezOdemeler.length===0)
       ? `<div style="color:var(--text3);font-size:14px">Ödeme kaydı yok</div>`
-      : odemeler.map(g=>`
-        <div style="background:var(--surface2);border-radius:var(--rs);padding:10px 12px;width:100%;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border)">
-          <div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)">${g.name}</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:2px">Oda ${g.room} · ${g.checkin} → ${g.checkout}</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:14px;font-weight:700;color:var(--accent);font-family:'DM Mono',monospace">${(g.amt||0).toLocaleString('tr-TR')}₺</div>
-            <div style="font-size:11px;color:var(--text2);margin-top:2px">${pLbl(g.pay)}</div>
-          </div>
-        </div>`).join('');
+      : [
+          ...odemeler.map(g=>`
+            <div style="background:var(--surface2);border-radius:var(--rs);padding:10px 12px;width:100%;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border)">
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--text)">${g.name}</div>
+                <div style="font-size:11px;color:var(--text2);margin-top:2px">Oda ${g.room} · ${g.checkin} → ${g.checkout}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:14px;font-weight:700;color:var(--accent);font-family:'DM Mono',monospace">${(g.amt||0).toLocaleString('tr-TR')}₺</div>
+                <div style="font-size:11px;color:var(--text2);margin-top:2px">${pLbl(g.pay)}</div>
+              </div>
+            </div>`),
+          ...rezOdemeler.map(r=>`
+            <div style="background:var(--blue-bg);border-radius:var(--rs);padding:10px 12px;width:100%;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--blue-bd)">
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--text)">${r.name} <span style="font-size:10px;background:var(--blue);color:#fff;padding:1px 6px;border-radius:8px">Rezervasyon</span></div>
+                <div style="font-size:11px;color:var(--text2);margin-top:2px">Oda ${r.room} · ${r.cin} → ${r.cout}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:14px;font-weight:700;color:var(--blue);font-family:'DM Mono',monospace">${(r.deposit||0).toLocaleString('tr-TR')}₺</div>
+                <div style="font-size:11px;color:var(--text2);margin-top:2px">Ön Ödeme</div>
+              </div>
+            </div>`)
+        ].join('');
     document.getElementById('stat-popup').classList.add('open');
     return;
   }
