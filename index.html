@@ -410,6 +410,7 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
 
       <div id="rez-alerts"></div>
       <div class="toolbar" style="padding-bottom:0">
+        <input class="search" type="search" id="rez-search" placeholder="İsim veya oda ara..." oninput="renderRez()" style="flex:1">
         <select class="fsel" id="rez-filter" onchange="renderRez()">
           <option value="all">Tümü</option>
           <option value="soon">Yaklaşan (7 gün)</option>
@@ -1399,9 +1400,11 @@ function isRoomConflict(room,cinISO,coutISO,skipId){
 
 function renderRez(){
   const filter=document.getElementById('rez-filter').value;
+  const q=(document.getElementById('rez-search')?.value||'').toLowerCase();
   let list=[...rez].sort((a,b)=>(dateObj(a.cin)||0)-(dateObj(b.cin)||0));
   if(filter==='soon') list=list.filter(r=>{ const d=daysDiff(r.cin); return d>=0&&d<=7; });
   if(filter==='conflict') list=list.filter(r=>!!isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id));
+  if(q) list=list.filter(r=>r.name.toLowerCase().includes(q)||r.room.includes(q)||(r.phone&&r.phone.includes(q)));
   const alerts=rez.filter(r=>{ const d=daysDiff(r.cin); return d>=0&&d<=3; });
   document.getElementById('rez-alerts').innerHTML=alerts.map(r=>{ const d=daysDiff(r.cin); const lbl=d===0?'Bugün giriş!':d===1?'Yarın giriş':''+d+' gün sonra'; const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id); return `<div class="rez-alert">🔔 <div><strong>${r.name} — Oda ${r.room}:</strong> ${lbl}${cf?` <span style="color:#c0242a;font-weight:700">⚠️ ${cf}</span>`:''}</div></div>`; }).join('');
   document.getElementById('tab-rez').textContent=alerts.length>0?`📋 Rezervasyon 🔴${alerts.length}`:'📋 Rezervasyon';
