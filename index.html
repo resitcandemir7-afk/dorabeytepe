@@ -1406,7 +1406,7 @@ function renderRez(){
   document.getElementById('rez-alerts').innerHTML=alerts.map(r=>{ const d=daysDiff(r.cin); const lbl=d===0?'Bugün giriş!':d===1?'Yarın giriş':''+d+' gün sonra'; const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id); return `<div class="rez-alert">🔔 <div><strong>${r.name} — Oda ${r.room}:</strong> ${lbl}${cf?` <span style="color:#c0242a;font-weight:700">⚠️ ${cf}</span>`:''}</div></div>`; }).join('');
   document.getElementById('tab-rez').textContent=alerts.length>0?`📋 Rezervasyon 🔴${alerts.length}`:'📋 Rezervasyon';
   document.getElementById('rez-hdr').textContent=`Rezervasyonlar (${list.length})`;
-  document.getElementById('rez-list').innerHTML=list.length===0?`<div class="loading">Rezervasyon bulunamadı</div>`:list.map(r=>{ const d=daysDiff(r.cin); const nights=Math.max(0,Math.round((dateObj(r.cout)-dateObj(r.cin))/86400000)); const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id); let cls='rez-card rc-future',db=`<span class="rdays rd-future">${d} gün sonra</span>`; if(d===0){cls='rez-card rc-soon';db=`<span class="rdays rd-today">Bugün</span>`;} else if(d<=7){cls='rez-card rc-soon';db=`<span class="rdays rd-soon">${d} gün sonra</span>`;} if(cf) cls+=' rc-conflict'; return `<div class="${cls}"><div class="gtop"><div class="avatar">${ini(r.name)}</div><div class="ginfo"><div class="gname">${r.name}</div><div class="gmeta">Oda <strong>${r.room}</strong> · ${r.cin} → ${r.cout} · ${nights} gece</div>${r.phone?`<div class="gmeta">📞 ${r.phone}</div>`:''}</div><div class="gright">${db}${r.deposit?`<div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:4px">${r.deposit.toLocaleString('tr-TR')}₺ ön</div>`:''}</div></div>${cf?`<div style="margin-top:8px;padding:8px;background:#fff3d6;border-radius:6px;font-size:12px;color:#7a4500">⚠️ ${cf}</div>`:''}<div class="card-actions" style="margin-top:9px;padding-top:9px;border-top:1px solid var(--border)"><button class="abtn a-edit" onclick="editRez(${r.id})">✏️ Düzenle</button>${d>=0&&d<=1?`<button class="abtn a-in" onclick="rezToCI(${r.id})">✓ Check-in'e Al</button>`:''}<button class="abtn a-del" style="flex:0;padding:7px 10px" onclick="delRez(${r.id})">✕</button></div></div>`; }).join('');
+  document.getElementById('rez-list').innerHTML=list.length===0?`<div class="loading">Rezervasyon bulunamadı</div>`:list.map(r=>{ const d=daysDiff(r.cin); const nights=Math.max(0,Math.round((dateObj(r.cout)-dateObj(r.cin))/86400000)); const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id); let cls='rez-card rc-future',db=`<span class="rdays rd-future">${d} gün sonra</span>`; if(d===0){cls='rez-card rc-soon';db=`<span class="rdays rd-today">Bugün</span>`;} else if(d<=7){cls='rez-card rc-soon';db=`<span class="rdays rd-soon">${d} gün sonra</span>`;} if(cf) cls+=' rc-conflict'; return `<div class="${cls}"><div class="gtop"><div class="avatar">${ini(r.name)}</div><div class="ginfo"><div class="gname">${r.name}</div><div class="gmeta">Oda <strong>${r.room}</strong> · ${r.cin} → ${r.cout} · ${nights} gece</div>${r.phone?`<div class="gmeta">📞 ${r.phone}</div>`:''}</div><div class="gright">${db}${r.deposit?`<div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:4px">${r.deposit.toLocaleString('tr-TR')}₺ ön</div>`:''}</div></div>${cf?`<div style="margin-top:8px;padding:8px;background:#fff3d6;border-radius:6px;font-size:12px;color:#7a4500">⚠️ ${cf}</div>`:''}<div class="card-actions" style="margin-top:9px;padding-top:9px;border-top:1px solid var(--border)"><button class="abtn a-edit" onclick="editRez(${r.id})">✏️ Düzenle</button>${r.phone?`<button class="abtn" style="background:#25d366;color:#fff;border:none" onclick="sendWhatsApp(${r.id})">📱 WhatsApp</button>`:''} ${d>=0&&d<=1?`<button class="abtn a-in" onclick="rezToCI(${r.id})">✓ Check-in'e Al</button>`:''}<button class="abtn a-del" style="flex:0;padding:7px 10px" onclick="delRez(${r.id})">✕</button></div></div>`; }).join('');
 }
 
 function fillRezRoomSel(){ const sel=document.getElementById('rz-room'); sel.innerHTML='<option value="">Oda seç...</option>'; [1,2,3].forEach(f=>{ const og=document.createElement('optgroup'); og.label=f+'. Kat'; FLOORS[f].forEach(r=>{ const o=document.createElement('option'); o.value=r; o.textContent=r; og.appendChild(o); }); sel.appendChild(og); }); }
@@ -2105,6 +2105,98 @@ async function loadHava(){
 }
 
 // ═══════════════════════════════════════
+// WHATSAPP MESAJ SİSTEMİ
+// ═══════════════════════════════════════
+let otelAyarlar = {};
+
+async function loadOtelAyarlar(){
+  const data = await sbSelect('ayarlar');
+  otelAyarlar = {};
+  data.forEach(a=>{ otelAyarlar[a.key]=a.value; });
+}
+
+async function sendWhatsApp(rezId){
+  const r = rez.find(x=>x.id===rezId);
+  if(!r||!r.phone){ toast('Telefon numarası yok!'); return; }
+
+  // Hava durumu çek (giriş günü)
+  let havaDurum = '';
+  try{
+    const cinISO = toISO(r.cin);
+    if(cinISO){
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=39.9208&longitude=32.8541&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe%2FIstanbul&start_date=${cinISO}&end_date=${cinISO}`;
+      const hRes = await fetch(url);
+      const hData = await hRes.json();
+      if(hData.daily){
+        const wc = hData.daily.weathercode[0];
+        const max = Math.round(hData.daily.temperature_2m_max[0]);
+        const min = Math.round(hData.daily.temperature_2m_min[0]);
+        const icon = HAVA_ICONS[wc]||'🌡️';
+        const desc = HAVA_DESC[wc]||'';
+        havaDurum = `${icon} ${desc}, ${min}°C - ${max}°C`;
+      }
+    }
+  }catch(e){}
+
+  const nights = r.cout&&r.cout!=='—' ? Math.max(0,Math.round((dateObj(r.cout)-dateObj(r.cin))/86400000)) : '?';
+  const ri = getRoomInfo(r.room);
+  const f  = fiyatlar[r.room]||{};
+  const fiyat = f.gunluk ? (f.gunluk * (typeof nights==='number'?nights:1)).toLocaleString('tr-TR')+'₺' : '—';
+  const feats = [ri.ac?'❄️ Klima':'', ri.bal?'🌿 Balkon':'', ri.tv?'📺 TV':'', ri.safe?'🔐 Kasa':'', ri.mbar?'🍷 Minibar':''].filter(Boolean).join(' ');
+
+  const ay = otelAyarlar;
+
+  const mesaj = `
+Sayın ${r.name},
+
+Dora Beytepe Otel'e hoş geldiniz! 🏨
+
+━━━━━━━━━━━━━━━━━━━━
+📋 REZERVASYON BİLGİLERİNİZ
+━━━━━━━━━━━━━━━━━━━━
+🏠 Oda: ${r.room} (${ri.type})
+📐 Alan: ${ri.sqm}m² | Manzara: ${ri.view}
+${feats?`✨ Özellikler: ${feats}`:''}
+👥 Kişi Sayısı: ${r.persons||1}
+📅 Giriş: ${r.cin}
+📅 Çıkış: ${r.cout!=='—'?r.cout:'Belirtilmedi'}
+🌙 Konaklama: ${nights} gece
+${r.deposit?`💰 Ön Ödeme: ${r.deposit.toLocaleString('tr-TR')}₺`:''}
+${f.gunluk?`💳 Toplam Tahmini: ${fiyat}`:''}
+${r.note?`📝 Not: ${r.note}`:''}
+
+━━━━━━━━━━━━━━━━━━━━
+📍 OTEL BİLGİLERİ
+━━━━━━━━━━━━━━━━━━━━
+📞 Resepsiyon: ${ay.otel_tel||''}
+🗺 Adres: ${ay.otel_adres||''}
+🔗 Konum: ${ay.maps_link||''}
+⏰ Check-out: ${ay.checkout_saat||'13:00'}
+
+━━━━━━━━━━━━━━━━━━━━
+📶 İNTERNET
+━━━━━━━━━━━━━━━━━━━━
+WiFi Ağı: ${ay.wifi_adi||'DORA'}
+WiFi Şifre: ${ay.wifi_sifre||''}
+
+${havaDurum?`━━━━━━━━━━━━━━━━━━━━
+🌤 GİRİŞ GÜNÜ ANKARA HAVA DURUMU
+━━━━━━━━━━━━━━━━━━━━
+${r.cin}: ${havaDurum}
+`:''}
+━━━━━━━━━━━━━━━━━━━━
+Bizi tercih ettiğiniz için teşekkür ederiz. Keyifli bir konaklama dileriz! 🌟
+
+Dora Beytepe Otel
+`.trim();
+
+  const tel = r.phone.replace(/\D/g,'');
+  const telFmt = tel.startsWith('0') ? '90'+tel.slice(1) : tel.startsWith('90') ? tel : '90'+tel;
+  const url = `https://wa.me/${telFmt}?text=${encodeURIComponent(mesaj)}`;
+  window.open(url, '_blank');
+}
+
+// ═══════════════════════════════════════
 // GİRİŞ GEÇMİŞİ
 // ═══════════════════════════════════════
 async function logGiris(){
@@ -2291,6 +2383,7 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 // Boot
 (async()=>{
   await loadPin();
+  await loadOtelAyarlar();
   // PIN doğrulandıktan sonra giriş logla
   await logGiris();
   guests = await sbSelect('guests','order=id.desc');
