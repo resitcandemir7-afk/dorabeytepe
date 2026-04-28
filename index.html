@@ -552,15 +552,21 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
       <div class="fgrp"><label class="flbl">Giriş Tarihi</label><input class="finput" type="date" id="f-cin"></div>
       <div class="fgrp"><label class="flbl">Çıkış Tarihi</label><input class="finput" type="date" id="f-cout"></div>
     </div>
-    <div class="fgrp"><label class="flbl">Tutar (₺)</label><input class="finput" type="number" id="f-amt" placeholder="1500"></div>
+    <div class="fgrp"><label class="flbl">Toplam Tutar (₺) — opsiyonel, ödemelerden otomatik hesaplanır</label><input class="finput" type="number" id="f-amt" placeholder="Ödemeler eklenince otomatik hesaplanır" disabled style="opacity:.5"></div>
     <div class="fgrp">
-      <label class="flbl">Ödeme Yöntemi</label>
-      <div class="ptoggle">
-        <button class="popt sel" id="ci-cash" onclick="selPay('nakit')">💵 Nakit</button>
-        <button class="popt" id="ci-card" onclick="selPay('kart')">💳 Kart</button>
-        <button class="popt" id="ci-iban" onclick="selPay('iban')">🏦 IBAN</button>
-        <button class="popt" id="ci-pend" onclick="selPay('beklemede')">⏳ Beklemede</button>
+      <label class="flbl">Ödemeler</label>
+      <div id="ci-payments-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:6px">
+        <input class="finput" type="number" id="ci-pay-amt" placeholder="Tutar (₺)" style="flex:1">
+        <select class="finput" id="ci-pay-method" style="flex:1">
+          <option value="nakit">💵 Nakit</option>
+          <option value="kart">💳 Kart</option>
+          <option value="iban">🏦 IBAN</option>
+          <option value="beklemede">⏳ Beklemede</option>
+        </select>
+        <button class="abtn a-in" style="flex:0;padding:8px 12px;white-space:nowrap" onclick="ciAddPayment()">+ Ekle</button>
       </div>
+      <div id="ci-pay-total" style="font-size:12px;color:var(--text2);text-align:right"></div>
     </div>
     <div class="mactions">
       <button class="mcancel" onclick="closeCI()">İptal</button>
@@ -933,7 +939,12 @@ function renderGuests(list){
         </div>
       </div>
       <div class="card-btm">
-        <span class="pbadge ${pCls(g.pay)}">${pLbl(g.pay)}</span>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${g.payments&&g.payments.length>0
+            ? g.payments.map(p=>`<span class="pbadge ${pCls(p.method)}">${pLbl(p.method)} ${p.amt.toLocaleString('tr-TR')}₺</span>`).join('')
+            : `<span class="pbadge ${pCls(g.pay)}">${pLbl(g.pay)}</span>`
+          }
+        </div>
         ${g.idno?`<span style="font-size:11px;color:var(--text3)">🪪 ${g.idno}</span>`:'<span></span>'}
       </div>
       <div class="card-actions">
@@ -978,24 +989,54 @@ function fillRoomSel(selId, currentRoom){
   });
 }
 
-function selPay(t){
-  ciPay=t;
-  ['cash','card','iban','pend'].forEach(k=>{ const m={cash:'nakit',card:'kart',iban:'iban',pend:'beklemede'}; document.getElementById('ci-'+k).classList.toggle('sel',m[k]===t); });
+// Çoklu ödeme sistemi
+let ciPayments = [];
+
+function ciAddPayment(){
+  const amt = parseInt(document.getElementById('ci-pay-amt').value)||0;
+  const method = document.getElementById('ci-pay-method').value;
+  if(!amt){ toast('Tutar girin'); return; }
+  ciPayments.push({amt, method});
+  document.getElementById('ci-pay-amt').value='';
+  renderCiPayments();
+}
+
+function ciRemovePayment(i){
+  ciPayments.splice(i,1);
+  renderCiPayments();
+}
+
+function renderCiPayments(){
+  const list = document.getElementById('ci-payments-list');
+  const total = ciPayments.reduce((s,p)=>s+p.amt,0);
+  list.innerHTML = ciPayments.length===0
+    ? `<div style="font-size:12px;color:var(--text3);padding:4px 0">Henüz ödeme eklenmedi</div>`
+    : ciPayments.map((p,i)=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:var(--rs);padding:7px 10px;border:1px solid var(--border)">
+        <span class="pbadge ${pCls(p.method)}">${pLbl(p.method)}</span>
+        <span style="font-size:14px;font-weight:700;font-family:'DM Mono',monospace">${p.amt.toLocaleString('tr-TR')}₺</span>
+        <button onclick="ciRemovePayment(${i})" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer">✕</button>
+      </div>`).join('');
+  document.getElementById('ci-pay-total').innerHTML = ciPayments.length>0
+    ? `Toplam: <strong style="color:var(--text)">${total.toLocaleString('tr-TR')}₺</strong>`:'';
 }
 
 function openCI(){
-  editId=null;
+  editId=null; ciPayments=[];
   document.getElementById('ci-title').textContent='Yeni Check-in';
   document.getElementById('ci-btn').textContent='Check-in Yap';
-  ['f-name','f-surn','f-bday','f-id','f-amt','f-cin','f-cout'].forEach(id=>document.getElementById(id).value='');
+  ['f-name','f-surn','f-bday','f-id','f-cin','f-cout','ci-pay-amt'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-status').value='Konaklamada';
-  selPay('nakit'); fillRoomSel('f-room',null);
+  document.getElementById('ci-pay-method').value='nakit';
+  renderCiPayments();
+  fillRoomSel('f-room',null);
   document.getElementById('modal-ci').classList.add('open');
   setTimeout(()=>document.getElementById('f-name').focus(),300);
 }
 
 function openEdit(id){
   editId=id; const g=guests.find(x=>x.id===id); if(!g) return;
+  ciPayments = g.payments ? [...g.payments] : (g.amt>0?[{amt:g.amt,method:g.pay||'nakit'}]:[]);
   document.getElementById('ci-title').textContent=g.name+' — Düzenle';
   document.getElementById('ci-btn').textContent='Güncelle';
   const p=g.name.split(' ');
@@ -1003,11 +1044,13 @@ function openEdit(id){
   document.getElementById('f-surn').value=p.slice(1).join(' ')||'';
   document.getElementById('f-bday').value=g.bday||'';
   document.getElementById('f-id').value=g.idno||'';
-  document.getElementById('f-amt').value=g.amt||'';
   document.getElementById('f-status').value=g.status||'Konaklamada';
   document.getElementById('f-cin').value=toISO(g.checkin);
   document.getElementById('f-cout').value=toISO(g.checkout);
-  selPay(g.pay||'nakit'); fillRoomSel('f-room',g.room);
+  document.getElementById('ci-pay-method').value='nakit';
+  document.getElementById('ci-pay-amt').value='';
+  renderCiPayments();
+  fillRoomSel('f-room',g.room);
   document.getElementById('modal-ci').classList.add('open');
 }
 
@@ -1020,14 +1063,19 @@ async function saveGuest(){
   const room=document.getElementById('f-room').value;
   const cin=document.getElementById('f-cin').value;
   const cout=document.getElementById('f-cout').value;
-  const amt=parseInt(document.getElementById('f-amt').value)||0;
   const idno=document.getElementById('f-id').value.trim();
   const bday=document.getElementById('f-bday').value;
   const status=document.getElementById('f-status').value;
   if(!name||!room){ alert('Ad ve oda zorunludur.'); return; }
   const fullName=`${name} ${surn}`.trim();
   const cinTR=cin?toTR(cin):new Date().toLocaleDateString('tr-TR');
-  const data={name:fullName,room,checkin:cinTR,checkout:cout?toTR(cout):'—',amt,pay:ciPay,status,idno,bday};
+  // Çoklu ödeme hesaplama
+  const amt = ciPayments.reduce((s,p)=>s+p.amt,0);
+  // Ana ödeme yöntemi — en yüksek tutarlı olanı baz al
+  const mainPay = ciPayments.length>0
+    ? ciPayments.reduce((a,b)=>a.amt>=b.amt?a:b).method
+    : 'beklemede';
+  const data={name:fullName,room,checkin:cinTR,checkout:cout?toTR(cout):'—',amt,pay:mainPay,payments:ciPayments,status,idno,bday};
   document.getElementById('ci-btn').textContent='⏳';
   if(editId!==null){
     await sbUpdate('guests',editId,data);
