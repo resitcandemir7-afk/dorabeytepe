@@ -2124,16 +2124,19 @@ async function sendWhatsApp(rezId){
   try{
     const cinISO = toISO(r.cin);
     if(cinISO){
-      const url=`https://api.open-meteo.com/v1/forecast?latitude=39.9208&longitude=32.8541&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe%2FIstanbul&start_date=${cinISO}&end_date=${cinISO}`;
+      const url=`https://api.open-meteo.com/v1/forecast?latitude=39.9208&longitude=32.8541&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum&hourly=temperature_2m&timezone=Europe%2FIstanbul&start_date=${cinISO}&end_date=${cinISO}`;
       const hRes = await fetch(url);
       const hData = await hRes.json();
       if(hData.daily){
-        const wc = hData.daily.weathercode[0];
+        const wc  = hData.daily.weathercode[0];
         const max = Math.round(hData.daily.temperature_2m_max[0]);
         const min = Math.round(hData.daily.temperature_2m_min[0]);
+        const yagis = hData.daily.precipitation_sum[0];
         const icon = HAVA_ICONS[wc]||'🌡️';
         const desc = HAVA_DESC[wc]||'';
-        havaDurum = `${icon} ${desc}, ${min}°C - ${max}°C`;
+        havaDurum = `${icon} ${desc}
+🌞 Gündüz: ${max}°C
+🌙 Gece: ${min}°C${yagis>0?`\n💧 Yağış bekleniyor: ${yagis.toFixed(1)}mm`:''}`;
       }
     }
   }catch(e){}
@@ -2141,54 +2144,56 @@ async function sendWhatsApp(rezId){
   const nights = r.cout&&r.cout!=='—' ? Math.max(0,Math.round((dateObj(r.cout)-dateObj(r.cin))/86400000)) : '?';
   const ri = getRoomInfo(r.room);
   const f  = fiyatlar[r.room]||{};
-  const fiyat = f.gunluk ? (f.gunluk * (typeof nights==='number'?nights:1)).toLocaleString('tr-TR')+'₺' : '—';
-  const feats = [ri.ac?'❄️ Klima':'', ri.bal?'🌿 Balkon':'', ri.tv?'📺 TV':'', ri.safe?'🔐 Kasa':'', ri.mbar?'🍷 Minibar':''].filter(Boolean).join(' ');
-
+  const toplamFiyat = f.gunluk && typeof nights==='number' ? (f.gunluk * nights).toLocaleString('tr-TR')+'₺' : null;
   const ay = otelAyarlar;
 
-  const mesaj = `
-Sayın ${r.name},
+  const mesaj = `Sayın ${r.name},
 
-Dora Beytepe Otel'e hoş geldiniz! 🏨
+Dora Beytepe Otel'deki rezervasyonunuz onaylanmıştır. Sizi aramızda görmekten mutluluk duyacağız. 🏨
 
-━━━━━━━━━━━━━━━━━━━━
-📋 REZERVASYON BİLGİLERİNİZ
-━━━━━━━━━━━━━━━━━━━━
-🏠 Oda: ${r.room} (${ri.type})
-📐 Alan: ${ri.sqm}m² | Manzara: ${ri.view}
-${feats?`✨ Özellikler: ${feats}`:''}
-👥 Kişi Sayısı: ${r.persons||1}
-📅 Giriş: ${r.cin}
-📅 Çıkış: ${r.cout!=='—'?r.cout:'Belirtilmedi'}
-🌙 Konaklama: ${nights} gece
-${r.deposit?`💰 Ön Ödeme: ${r.deposit.toLocaleString('tr-TR')}₺`:''}
-${f.gunluk?`💳 Toplam Tahmini: ${fiyat}`:''}
-${r.note?`📝 Not: ${r.note}`:''}
+━━━━━━━━━━━━━━━
+🛏 REZERVASYON BİLGİLERİ
+━━━━━━━━━━━━━━━
+Oda Numarası: ${r.room}
+Oda Tipi: ${ri.type}
+Giriş Tarihi: ${r.cin}
+Çıkış Tarihi: ${r.cout!=='—'?r.cout:'Belirtilmedi'}
+Konaklama Süresi: ${nights} gece
+Kişi Sayısı: ${r.persons||1} kişi
+${r.deposit?`Alınan Ön Ödeme: ${r.deposit.toLocaleString('tr-TR')}₺`:''}${toplamFiyat?`\nToplam Tutar: ${toplamFiyat}`:''}
+${r.note?`Özel İsteğiniz: ${r.note}`:''}
 
-━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━
 📍 OTEL BİLGİLERİ
-━━━━━━━━━━━━━━━━━━━━
-📞 Resepsiyon: ${ay.otel_tel||''}
-🗺 Adres: ${ay.otel_adres||''}
-🔗 Konum: ${ay.maps_link||''}
-⏰ Check-out: ${ay.checkout_saat||'13:00'}
+━━━━━━━━━━━━━━━
+Adres: ${ay.otel_adres||''}
+Konum: ${ay.maps_link||''}
+Resepsiyon: ${ay.otel_tel||''}
+Check-out Saati: ${ay.checkout_saat||'13:00'}
 
-━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━
 📶 İNTERNET
-━━━━━━━━━━━━━━━━━━━━
+━━━━━━━━━━━━━━━
 WiFi Ağı: ${ay.wifi_adi||'DORA'}
-WiFi Şifre: ${ay.wifi_sifre||''}
+WiFi Şifresi: ${ay.wifi_sifre||''}
+(Tüm katlarda aynı şifre geçerlidir)
 
-${havaDurum?`━━━━━━━━━━━━━━━━━━━━
-🌤 GİRİŞ GÜNÜ ANKARA HAVA DURUMU
-━━━━━━━━━━━━━━━━━━━━
-${r.cin}: ${havaDurum}
-`:''}
-━━━━━━━━━━━━━━━━━━━━
-Bizi tercih ettiğiniz için teşekkür ederiz. Keyifli bir konaklama dileriz! 🌟
+${havaDurum?`━━━━━━━━━━━━━━━
+🌤 GİRİŞ GÜNÜ HAVA DURUMU (ANKARA)
+━━━━━━━━━━━━━━━
+${r.cin} tarihi için tahmin:
+${havaDurum}
 
-Dora Beytepe Otel
-`.trim();
+`:''}━━━━━━━━━━━━━━━
+ℹ️ BİLGİLENDİRME
+━━━━━━━━━━━━━━━
+• Odanıza giriş saatinizde resepsiyonumuza uğramanız yeterlidir.
+• Check-out saatinden sonra geç çıkış talebiniz için lütfen önceden bilgi veriniz.
+• Herhangi bir sorunuz için resepsiyonumuzu arayabilirsiniz.
+
+Keyifli bir konaklama dileriz. 🌟
+
+Dora Beytepe Otel Ekibi`.trim();
 
   const tel = r.phone.replace(/\D/g,'');
   const telFmt = tel.startsWith('0') ? '90'+tel.slice(1) : tel.startsWith('90') ? tel : '90'+tel;
