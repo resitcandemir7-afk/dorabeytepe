@@ -2172,7 +2172,6 @@ Dora Beytepe Otel'deki rezervasyonunuz onaylanmıştır. Sizi aramızda görmekt
 ━━━━━━━━━━━━━━━
 🛏 REZERVASYON BİLGİLERİ
 ━━━━━━━━━━━━━━━
-Oda Numarası: ${r.room}
 Oda Tipi: ${ri.type}
 Giriş Tarihi: ${r.cin}
 Çıkış Tarihi: ${r.cout!=='—'?r.cout:'Belirtilmedi'}
@@ -2187,14 +2186,13 @@ ${r.note?`Özel İsteğiniz: ${r.note}`:''}
 Adres: ${ay.otel_adres||''}
 Konum: ${ay.maps_link||''}
 Resepsiyon: ${ay.otel_tel||''}
-Check-out Saati: ${ay.checkout_saat||'13:00'}
+Check-in Saati: 15:00
+Check-out Saati: 12:00
 
 ━━━━━━━━━━━━━━━
 📶 İNTERNET
 ━━━━━━━━━━━━━━━
-WiFi Ağı: ${ay.wifi_adi||'DORA'}
-WiFi Şifresi: ${ay.wifi_sifre||''}
-(Tüm katlarda aynı şifre geçerlidir)
+WiFi hızımız 1000 Mbps'tır. Giriş yaptıktan sonra WiFi şifresi için lütfen resepsiyonumuza başvurunuz.
 
 ━━━━━━━━━━━━━━━
 💼 TEKNOLOJİ & İŞ MERKEZLERİ
@@ -2218,6 +2216,8 @@ WiFi Şifresi: ${ay.wifi_sifre||''}
 ━━━━━━━━━━━━━━━
 • Bilkent Şehir Hastanesi (6.5 km)
 • Güven Hastanesi (2 km)
+• Lösante (5 km)
+• Medisun (2.5 km)
 
 ━━━━━━━━━━━━━━━
 🚀 ULAŞIM
@@ -2250,7 +2250,7 @@ ${havaDurum}
 • Odalarda sigara kullanımı kesinlikle yasaktır.
 • Odalara dışardan ziyaretçi getirilmesi yasaktır.
 • Kimlik bildirimi yapılmayan kişilerin odaya girmesi, otel güvenliği ve 1774 sayılı Kimlik Bildirme Kanunu uyarınca yasaktır.
-• Check-out saati ${ay.checkout_saat||'13:00'}'dir.
+• Check-out saati 12:00'dir.
 
 Keyifli bir konaklama dileriz. 🌟
 
