@@ -532,8 +532,12 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
     <div class="mhandle"></div>
     <div class="mtitle" id="ci-title">Yeni Check-in</div>
     <div class="frow">
-      <div class="fgrp"><label class="flbl">Ad</label><input class="finput" type="text" id="f-name" placeholder="Ahmet"></div>
-      <div class="fgrp"><label class="flbl">Soyad</label><input class="finput" type="text" id="f-surn" placeholder="Yılmaz"></div>
+      <div class="fgrp"><label class="flbl">Ad</label><input class="finput" type="text" id="f-name" placeholder="Ahmet" oninput="searchGuestHistory()"></div>
+      <div class="fgrp"><label class="flbl">Soyad</label><input class="finput" type="text" id="f-surn" placeholder="Yılmaz" oninput="searchGuestHistory()"></div>
+    </div>
+    <div id="guest-history-banner" style="display:none;margin-bottom:10px;padding:10px 12px;border-radius:var(--rs);background:var(--blue-bg);border:1.5px solid var(--blue-bd)">
+      <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px">🔄 Bu isimde daha önce konaklayan misafir(ler) bulundu:</div>
+      <div id="guest-history-list" style="display:flex;flex-direction:column;gap:5px"></div>
     </div>
     <div class="frow">
       <div class="fgrp"><label class="flbl">Doğum Tarihi</label><input class="finput" type="date" id="f-bday"></div>
@@ -1788,6 +1792,55 @@ function saveFiyat(){
     not:       document.getElementById('fiyat-not').value.trim()
   };
   saveFiyatlar(); closeFiyatModal(); renderFiyatlar(); toast('✓ Fiyat kaydedildi');
+}
+
+// ── Misafir Geçmişi ──
+function searchGuestHistory(){
+  const name = document.getElementById('f-name').value.trim();
+  const surn = document.getElementById('f-surn').value.trim();
+  const q = `${name} ${surn}`.trim().toLowerCase();
+  const banner = document.getElementById('guest-history-banner');
+  const list   = document.getElementById('guest-history-list');
+
+  if(q.length < 3){ banner.style.display='none'; return; }
+
+  // Mevcut editId hariç tüm geçmiş kayıtları ara
+  const matches = guests.filter(g=>{
+    if(g.id === editId) return false;
+    return g.name.toLowerCase().includes(q);
+  }).slice(0, 5);
+
+  if(matches.length === 0){ banner.style.display='none'; return; }
+
+  banner.style.display='block';
+  list.innerHTML = matches.map(g=>`
+    <div style="background:var(--surface);border-radius:var(--rs);padding:7px 10px;border:1px solid var(--blue-bd);cursor:pointer" onclick="fillFromHistory(${g.id})">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <span style="font-size:13px;font-weight:700;color:var(--text)">${g.name}</span>
+          <span class="badge ${bCls(g.status)}" style="margin-left:6px;font-size:10px;padding:1px 7px">${g.status}</span>
+        </div>
+        <span style="font-size:11px;color:var(--text3)">${g.checkin}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px">
+        Oda ${g.room} · ${g.checkin} → ${g.checkout} · ${fmt(g.amt)}
+        ${g.idno?` · 🪪 ${g.idno}`:''}
+      </div>
+      <div style="font-size:10px;color:var(--blue);margin-top:3px">👆 Bilgileri doldur</div>
+    </div>`).join('');
+}
+
+function fillFromHistory(id){
+  const g = guests.find(x=>x.id===id); if(!g) return;
+  // Sadece kimlik ve doğum tarihi gibi sabit bilgileri doldur
+  const p = g.name.split(' ');
+  document.getElementById('f-name').value = p[0]||'';
+  document.getElementById('f-surn').value = p.slice(1).join(' ')||'';
+  if(g.bday) document.getElementById('f-bday').value = g.bday;
+  if(g.idno) document.getElementById('f-id').value = g.idno;
+  // Oda ve tarihleri doldurmuyoruz — yeni konaklama için yeni seçim yapılsın
+  document.getElementById('guest-history-banner').style.display='none';
+  toast(`✓ ${g.name} bilgileri dolduruldu`);
 }
 
 // ── Swipe Check-out ──
