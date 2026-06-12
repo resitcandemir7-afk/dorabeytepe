@@ -901,9 +901,6 @@ function updateStats(){
   document.getElementById('s-empty').textContent = ALL_ROOMS.filter(r=>!occSet.has(r)).length;
   const td = new Date().toLocaleDateString('tr-TR');
   document.getElementById('s-co').textContent    = guests.filter(g=>g.checkout===td&&g.status!=='Check-out').length;
-  const rev = guests.filter(g=>g.pay!=='beklemede').reduce((s,g)=>s+(g.amt||0),0)
-             + rez.filter(r=>r.deposit>0).reduce((s,r)=>s+(r.deposit||0),0);
-  document.getElementById('s-rev').textContent   = rev.toLocaleString('tr-TR')+'₺';
 }
 
 // ═══════════════════════════════════════
