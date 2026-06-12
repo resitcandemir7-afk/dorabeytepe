@@ -319,13 +319,13 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
     <div class="stat red" onclick="showStatPopup('dolu')" style="cursor:pointer"><div class="sv" id="s-occ">0</div><div class="sl">Dolu Oda</div></div>
     <div class="stat" onclick="showStatPopup('bos')" style="cursor:pointer"><div class="sv" style="color:var(--green)" id="s-empty">0</div><div class="sl">Boş Oda</div></div>
     <div class="stat" onclick="showStatPopup('cikis')" style="cursor:pointer"><div class="sv" id="s-co">0</div><div class="sl">Çıkış Bugün</div></div>
-    <div class="stat" onclick="showStatPopup('gelir')" style="cursor:pointer"><div class="sv gold" id="s-rev">0₺</div><div class="sl">Gelir</div></div>
   </div>
   <div class="tabs">
     <div class="tab active" onclick="switchTab('guests',this)">Misafirler</div>
     <div class="tab" onclick="switchTab('rooms',this)">Odalar</div>
     <div class="tab" onclick="switchTab('fiyat',this)">💰 Fiyatlar</div>
     <div class="tab" onclick="switchTab('pay',this)">Ödemeler</div>
+    <div class="tab" onclick="switchTab('gelirler',this)">💰 Gelirler</div>
     <div class="tab" onclick="switchTab('rez',this)" id="tab-rez">📋 Rezervasyon</div>
     <div class="tab" onclick="switchTab('longstay',this)">🏠 Uzun Konaklama</div>
     <div class="tab" onclick="switchTab('temizlik',this)">🧹 Temizlik</div>
@@ -379,6 +379,18 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
       <div class="psums" id="pay-sums"></div>
       <div class="sec-hdr" style="margin-top:6px">Misafir Ödemeleri</div>
       <div class="glist" id="pay-list"></div>
+    </div>
+
+    <!-- Gelirler -->
+    <div class="pane" id="pane-gelirler">
+      <div class="sec-hdr">Toplam Gelir</div>
+      <div class="psums" id="gelir-toplam" style="margin-bottom:8px"></div>
+      <div class="sec-hdr" style="margin-top:8px">Ödeme Yöntemine Göre</div>
+      <div class="psums" id="gelir-yontem" style="margin-bottom:8px"></div>
+      <div class="sec-hdr" style="margin-top:8px">Rezervasyon Ön Ödemeleri</div>
+      <div class="psums" id="gelir-rezodeme" style="margin-bottom:8px"></div>
+      <div class="sec-hdr" style="margin-top:8px">Gelir Detayı</div>
+      <div class="glist" id="gelir-list"></div>
     </div>
     <div class="pane" id="pane-rez">
       <!-- Müsaitlik Sorgula -->
@@ -903,6 +915,7 @@ async function switchTab(tab, el){
   if(tab==='guests'){ guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); }
   if(tab==='rooms'){ guests=await sbSelect('guests','order=id.desc'); await loadTmz(); await loadRooms(); renderRooms(); }
   if(tab==='pay'){ guests=await sbSelect('guests','order=id.desc'); renderPay(); }
+  if(tab==='gelirler'){ guests=await sbSelect('guests','order=id.desc'); rez=await sbSelect('rezervasyonlar','order=id.asc'); renderGelirler(); }
   if(tab==='rez'){ rez=await sbSelect('rezervasyonlar','order=id.asc'); renderRez(); }
   if(tab==='longstay'){ guests=await sbSelect('guests','order=id.desc'); renderLongStay(); }
   if(tab==='fiyat'){ guests=await sbSelect('guests','order=id.desc'); renderFiyatlar(); }
@@ -1248,6 +1261,71 @@ async function saveRoom(){
 // ═══════════════════════════════════════
 // PAYMENTS
 // ═══════════════════════════════════════
+function renderGelirler(){
+  // Ödemeler payments alanından çek
+  let nakit=0, kart=0, iban=0, bekleyen=0;
+  let nakitSayi=0, kartSayi=0, ibanSayi=0;
+  const detayList = [];
+
+  guests.forEach(g=>{
+    const pays = g.payments && g.payments.length>0 ? g.payments : (g.amt>0?[{amt:g.amt,method:g.pay}]:[]);
+    pays.forEach(p=>{
+      const amt = p.amt||0;
+      if(p.method==='nakit'){ nakit+=amt; nakitSayi++; }
+      else if(p.method==='kart'){ kart+=amt; kartSayi++; }
+      else if(p.method==='iban'){ iban+=amt; ibanSayi++; }
+      else if(p.method==='beklemede'){ bekleyen+=amt; }
+    });
+    if(pays.length>0 && pays.some(p=>p.method!=='beklemede')){
+      detayList.push(g);
+    }
+  });
+
+  const tahsil = nakit+kart+iban;
+  const rezOnodeme = rez.filter(r=>r.deposit>0).reduce((s,r)=>s+(r.deposit||0),0);
+  const genel = tahsil + rezOnodeme;
+
+  // Toplam gelir kartı
+  document.getElementById('gelir-toplam').innerHTML=`
+    <div class="psum" style="grid-column:1/-1;background:var(--accent-bg);border:1.5px solid var(--accent)">
+      <div class="psum-val gold" style="font-size:24px">${genel.toLocaleString('tr-TR')}₺</div>
+      <div class="psum-lbl" style="font-weight:700">💰 Genel Toplam (Misafir + Ön Ödeme)</div>
+    </div>
+    <div class="psum"><div class="psum-val" style="color:var(--accent)">${tahsil.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">Misafir Tahsilatı</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--blue)">${rezOnodeme.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">Ön Ödemeler</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--amber)">${bekleyen.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">⏳ Bekleyen</div></div>`;
+
+  // Ödeme yöntemi
+  document.getElementById('gelir-yontem').innerHTML=`
+    <div class="psum"><div class="psum-val" style="color:var(--green)">${nakit.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">💵 Nakit (${nakitSayi})</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--blue)">${kart.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">💳 Kart (${kartSayi})</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--accent)">${iban.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">🏦 IBAN (${ibanSayi})</div></div>`;
+
+  // Rezervasyon ön ödemeleri
+  const rezOdemeList = rez.filter(r=>r.deposit>0).slice(0,5);
+  document.getElementById('gelir-rezodeme').innerHTML=`
+    <div class="psum" style="grid-column:1/-1"><div class="psum-val" style="color:var(--blue)">${rezOnodeme.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">📋 ${rez.filter(r=>r.deposit>0).length} Rezervasyondan Alınan Ön Ödeme</div></div>`;
+
+  // Gelir detayı
+  const sorted = [...detayList].sort((a,b)=>(b.amt||0)-(a.amt||0));
+  document.getElementById('gelir-list').innerHTML = sorted.length===0
+    ? `<div class="loading">Ödeme kaydı yok</div>`
+    : sorted.map(g=>`
+      <div class="gcard">
+        <div class="gtop">
+          <div class="avatar">${ini(g.name)}</div>
+          <div class="ginfo">
+            <div class="gname">${g.name}</div>
+            <div class="gmeta">Oda ${g.room} · ${g.checkin} → ${g.checkout}</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">
+              ${(g.payments&&g.payments.length>0?g.payments:[{amt:g.amt,method:g.pay}]).filter(p=>p.method!=='beklemede').map(p=>`<span class="pbadge ${pCls(p.method)}">${pLbl(p.method)} ${(p.amt||0).toLocaleString('tr-TR')}₺</span>`).join('')}
+            </div>
+          </div>
+          <div class="pay-amt">${fmt(g.amt)}</div>
+        </div>
+      </div>`).join('');
+}
+
 function renderPay(){
   const cash=guests.filter(g=>g.pay==='nakit').reduce((s,g)=>s+(g.amt||0),0);
   const card=guests.filter(g=>g.pay==='kart').reduce((s,g)=>s+(g.amt||0),0);
