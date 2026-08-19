@@ -1552,13 +1552,10 @@ function renderRapor(){
   const girenler = guests.filter(g=>g.checkin===trDate);
   // O gün çıkış yapanlar
   const cikanlar = guests.filter(g=>g.checkout===trDate);
-  // O gün konaklayanlar (giriş≤tarih<çıkış, VEYA çıkış tarihi bugünse ama henüz gerçek check-out yapılmadıysa)
+  // O gün konaklayanlar (giriş≤tarih≤çıkış — çıkış günü de dahil, statüden bağımsız)
   const konaklayanlar = guests.filter(g=>{
     const ci=dateObj(g.checkin); const co=dateObj(g.checkout); const d=dateObj(trDate);
-    if(!ci||!co||!d||ci>d) return false;
-    if(co>d) return true;
-    if(co.getTime()===d.getTime() && g.status!=='Check-out') return true;
-    return false;
+    return ci&&co&&d&&ci<=d&&d<=co;
   });
   // O günkü gelir (o gün giriş yapanların tutarları)
   const gunGelir = girenler.filter(g=>g.pay!=='beklemede').reduce((s,g)=>s+(g.amt||0),0);
