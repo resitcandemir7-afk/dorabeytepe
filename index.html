@@ -504,6 +504,7 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
       <div class="toolbar" style="padding-bottom:0;align-items:center;justify-content:space-between">
         <input type="date" class="fsel" id="rapor-tarih" onchange="renderRapor()">
         <button class="btn-new" style="font-size:12px;padding:8px 12px" onclick="document.getElementById('rapor-tarih').value=new Date().toISOString().split('T')[0];renderRapor()">Bugün</button>
+        <button class="btn-new" style="font-size:12px;padding:8px 12px" onclick="exportRaporCSV()">⬇️ Excel</button>
       </div>
       <div id="rapor-content" style="padding:0 14px"></div>
     </div>
@@ -1563,6 +1564,24 @@ function renderRapor(){
   const gunRez = rez.filter(r=>r.cin===trDate);
   const doluluk = Math.round(konaklayanlar.length/73*100);
 
+  // ── Günlük tahakkuk geliri: her dolu odanın o güne düşen payı ──
+  // Kısa dönem (< UZUN_DONEM_ESIK gece): tutar / toplam gece
+  // Uzun dönem (>= UZUN_DONEM_ESIK gece): tutar aylık kabul edilir, o ayın gün sayısına bölünür
+  const UZUN_DONEM_ESIK = 28;
+  const daysInMonth = d => new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+  const tahakkukList = konaklayanlar.map(g=>{
+    const ci=dateObj(g.checkin), co=dateObj(g.checkout), d=dateObj(trDate);
+    const toplamGece = ci&&co ? Math.round((co-ci)/86400000) : 0;
+    const uzunDonem = toplamGece>=UZUN_DONEM_ESIK;
+    const bolen = uzunDonem ? daysInMonth(d) : Math.max(toplamGece,1);
+    const gunlukTutar = bolen>0 ? (g.amt||0)/bolen : 0;
+    return {...g, uzunDonem, bolen, gunlukTutar};
+  }).sort((a,b)=>a.room.localeCompare(b.room));
+  const toplamTahakkuk = tahakkukList.reduce((s,g)=>s+g.gunlukTutar,0);
+  window._raporTahakkukList = tahakkukList;
+  window._raporTahakkukToplam = toplamTahakkuk;
+  window._raporDateLabel = dateLabel;
+
   document.getElementById('rapor-content').innerHTML=`
     <div style="margin:12px 0 8px;font-size:15px;font-weight:700;color:var(--text)">${dateLabel}</div>
 
@@ -1577,6 +1596,21 @@ function renderRapor(){
       <div class="psum"><div class="psum-val" style="color:var(--amber)">${gunBekleyen.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">⏳ Bekleyen</div></div>
       <div class="psum"><div class="psum-val" style="color:var(--blue)">${girenler.length}</div><div class="psum-lbl">✅ Giriş</div></div>
     </div>
+
+    <div class="ocard" style="margin-bottom:12px;border:1.5px solid var(--accent)">
+      <div class="oicon" style="background:var(--blue-bg)">📊</div>
+      <div class="oinfo"><div class="oname">Günlük Tahakkuk Geliri</div><div class="odet">${konaklayanlar.length} dolu oda üzerinden, geceliğe/aylığa bölünmüş toplam</div></div>
+      <div class="oright"><div style="font-size:16px;font-weight:800;color:var(--accent)">${toplamTahakkuk.toLocaleString('tr-TR',{maximumFractionDigits:0})}₺</div></div>
+    </div>
+
+    ${konaklayanlar.length>0?`
+    <div class="sec-hdr">🛏️ Bugün Dolu Odalar (${konaklayanlar.length})</div>
+    ${tahakkukList.map(g=>`
+      <div class="ocard" style="margin-bottom:6px">
+        <div class="oicon" style="background:var(--blue-bg)">🚪</div>
+        <div class="oinfo"><div class="oname">Oda ${g.room} · ${g.name}</div><div class="odet">${g.checkin} → ${g.checkout} · ${g.uzunDonem?'Uzun dönem':'Kısa dönem'}</div></div>
+        <div class="oright"><div style="font-size:13px;font-weight:700;color:var(--accent)">${g.gunlukTutar.toLocaleString('tr-TR',{maximumFractionDigits:0})}₺/gün</div></div>
+      </div>`).join('')}`:''}
 
     ${girenler.length>0?`
     <div class="sec-hdr">✅ Giriş Yapanlar (${girenler.length})</div>
@@ -1608,6 +1642,28 @@ function renderRapor(){
     ${girenler.length===0&&cikanlar.length===0&&gunRez.length===0?`
     <div class="loading" style="margin-top:30px">Bu tarihte işlem kaydı bulunamadı</div>`:''}
   `;
+}
+
+function exportRaporCSV(){
+  const list = window._raporTahakkukList||[];
+  const toplam = window._raporTahakkukToplam||0;
+  const label = window._raporDateLabel||'';
+  if(list.length===0){ toast('Bu tarihte dolu oda yok'); return; }
+  let rows = [['Oda','Misafir','Giris','Cikis','Konaklama Tipi','Gunluk Gelir (TL)']];
+  list.forEach(g=>{
+    rows.push([g.room, g.name, g.checkin, g.checkout, g.uzunDonem?'Uzun Donem':'Kisa Donem', g.gunlukTutar.toFixed(2).replace('.',',')]);
+  });
+  rows.push([]);
+  rows.push(['','','','','TOPLAM GUNLUK GELIR', toplam.toFixed(2).replace('.',',')]);
+  const csv = '\uFEFF'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Dora_Gunluk_Rapor_${document.getElementById('rapor-tarih').value}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✓ Rapor indirildi');
 }
 
 function renderToday(){ const td=new Date().toLocaleDateString('tr-TR'); const ops=guests.filter(g=>g.checkin===td||g.checkout===td).map(g=>({name:g.name,room:g.room,id:g.id,op:g.checkin===td?'checkin':'checkout',done:g.status==='Check-out'||(g.status==='Konaklamada'&&g.checkin!==td)})); document.getElementById('ops-list').innerHTML=ops.length===0?`<div class="loading">Bugün işlem yok</div>`:ops.map(op=>`<div class="ocard"><div class="oicon ${op.op==='checkin'?'oi-in':'oi-out'}">${op.op==='checkin'?'🔑':'🧳'}</div><div class="oinfo"><div class="oname">${op.name}</div><div class="odet">Oda ${op.room} · ${op.op==='checkin'?'Check-in':'Check-out'}</div></div><div class="oright"><div class="${op.done?'os-done':'os-pend'}">${op.done?'✓ Tamamlandı':'● Bekliyor'}</div><button class="abtn a-edit" style="margin-top:5px;flex:0;padding:4px 9px;font-size:11px" onclick="openEdit(${op.id})">Düzenle</button></div></div>`).join(''); }
