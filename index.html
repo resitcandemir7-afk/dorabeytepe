@@ -570,6 +570,19 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
       <div class="fgrp"><label class="flbl">Giriş Tarihi</label><input class="finput" type="date" id="f-cin"></div>
       <div class="fgrp"><label class="flbl">Çıkış Tarihi</label><input class="finput" type="date" id="f-cout"></div>
     </div>
+    <div class="frow">
+      <div class="fgrp"><label class="flbl">Kaynak</label>
+        <select class="finput" id="f-kaynak" onchange="onKaynakChange()">
+          <option value="Kapı Müşterisi">🚪 Kapı Müşterisi</option>
+          <option value="Acenta">🏢 Acenta</option>
+        </select>
+      </div>
+      <div class="fgrp" id="f-acenta-wrap" style="display:none"><label class="flbl">Acenta / Şirket Adı</label><input class="finput" type="text" id="f-acenta" placeholder="Booking, Baker Hughes, Elin Elektrik..."></div>
+    </div>
+    <div class="fgrp" style="display:flex;align-items:center;gap:8px;margin:2px 0 12px">
+      <input type="checkbox" id="f-comp" onchange="onCompChange()" style="width:18px;height:18px;margin:0">
+      <label for="f-comp" style="font-size:13px;font-weight:600;color:var(--text)">🎁 Bu oda ücretsiz (Comp)</label>
+    </div>
     <div class="fgrp"><label class="flbl">Toplam Tutar (₺) — opsiyonel, ödemelerden otomatik hesaplanır</label><input class="finput" type="number" id="f-amt" placeholder="Ödemeler eklenince otomatik hesaplanır" disabled style="opacity:.5"></div>
     <div class="fgrp">
       <label class="flbl">Ödemeler</label>
@@ -580,6 +593,7 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
           <option value="nakit">💵 Nakit</option>
           <option value="kart">💳 Kart</option>
           <option value="iban">🏦 IBAN</option>
+          <option value="acenta">🏢 Acenta Ödemesi</option>
           <option value="beklemede">⏳ Beklemede</option>
         </select>
         <button class="abtn a-in" style="flex:0;padding:8px 12px;white-space:nowrap" onclick="ciAddPayment()">+ Ekle</button>
@@ -879,8 +893,8 @@ let editRoomId=null, rmType='Çift Kişilik', rmView='Bahçe', rmAc=true, rmBal=
 const ini  = n => n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
 const fmt  = a => a>0 ? a.toLocaleString('tr-TR')+'₺' : '—';
 const bCls = s => ({Konaklamada:'b-stay','Check-out':'b-out',Bekleniyor:'b-wait'}[s]||'');
-const pCls = p => ({nakit:'p-cash',kart:'p-card',iban:'p-card',beklemede:'p-pend'}[p]||'p-pend');
-const pLbl = p => ({nakit:'💵 Nakit',kart:'💳 Kart',iban:'🏦 IBAN',beklemede:'⏳ Beklemede'}[p]||'—');
+const pCls = p => ({nakit:'p-cash',kart:'p-card',iban:'p-card',acenta:'p-card',comp:'p-pend',beklemede:'p-pend'}[p]||'p-pend');
+const pLbl = p => ({nakit:'💵 Nakit',kart:'💳 Kart',iban:'🏦 IBAN',acenta:'🏢 Acenta',comp:'🎁 Comp',beklemede:'⏳ Beklemede'}[p]||'—');
 const toISO = d => { if(!d||d==='—') return ''; const p=d.split('.'); return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:''; };
 const toTR  = d => { if(!d) return '—'; const p=d.split('-'); return p.length===3?`${p[2]}.${p[1]}.${p[0]}`:'—'; };
 const fmtBday = d => { try{ return new Date(d).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return d||''; } };
@@ -926,6 +940,7 @@ async function switchTab(tab, el){
   if(tab==='rapor'){
     guests=await sbSelect('guests','order=id.desc');
     rez=await sbSelect('rezervasyonlar','order=id.asc');
+    await loadRooms();
     const el=document.getElementById('rapor-tarih');
     if(!el.value) el.value=new Date().toISOString().split('T')[0];
     renderRapor();
@@ -1038,13 +1053,29 @@ function renderCiPayments(){
     ? `Toplam: <strong style="color:var(--text)">${total.toLocaleString('tr-TR')}₺</strong>`:'';
 }
 
+function onKaynakChange(){
+  const v=document.getElementById('f-kaynak').value;
+  document.getElementById('f-acenta-wrap').style.display = v==='Acenta' ? '' : 'none';
+}
+function onCompChange(){
+  const comp=document.getElementById('f-comp').checked;
+  document.getElementById('ci-pay-amt').disabled=comp;
+  document.getElementById('ci-pay-method').disabled=comp;
+  if(comp){ ciPayments=[]; renderCiPayments(); }
+}
+
 function openCI(){
   editId=null; ciPayments=[];
   document.getElementById('ci-title').textContent='Yeni Check-in';
   document.getElementById('ci-btn').textContent='Check-in Yap';
-  ['f-name','f-surn','f-bday','f-id','f-cin','f-cout','ci-pay-amt'].forEach(id=>document.getElementById(id).value='');
+  ['f-name','f-surn','f-bday','f-id','f-cin','f-cout','ci-pay-amt','f-acenta'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-status').value='Konaklamada';
   document.getElementById('ci-pay-method').value='nakit';
+  document.getElementById('f-kaynak').value='Kapı Müşterisi';
+  document.getElementById('f-acenta-wrap').style.display='none';
+  document.getElementById('f-comp').checked=false;
+  document.getElementById('ci-pay-amt').disabled=false;
+  document.getElementById('ci-pay-method').disabled=false;
   renderCiPayments();
   fillRoomSel('f-room',null);
   document.getElementById('modal-ci').classList.add('open');
@@ -1064,6 +1095,12 @@ function openEdit(id){
   document.getElementById('f-status').value=g.status||'Konaklamada';
   document.getElementById('f-cin').value=toISO(g.checkin);
   document.getElementById('f-cout').value=toISO(g.checkout);
+  document.getElementById('f-kaynak').value=g.kaynak||'Kapı Müşterisi';
+  document.getElementById('f-acenta').value=g.acenta||'';
+  document.getElementById('f-acenta-wrap').style.display=(g.kaynak==='Acenta')?'':'none';
+  document.getElementById('f-comp').checked=!!g.comp;
+  document.getElementById('ci-pay-amt').disabled=!!g.comp;
+  document.getElementById('ci-pay-method').disabled=!!g.comp;
   document.getElementById('ci-pay-method').value='nakit';
   document.getElementById('ci-pay-amt').value='';
   renderCiPayments();
@@ -1083,16 +1120,19 @@ async function saveGuest(){
   const idno=document.getElementById('f-id').value.trim();
   const bday=document.getElementById('f-bday').value;
   const status=document.getElementById('f-status').value;
+  const kaynak=document.getElementById('f-kaynak').value;
+  const acenta=document.getElementById('f-acenta').value.trim();
+  const comp=document.getElementById('f-comp').checked;
   if(!name||!room){ alert('Ad ve oda zorunludur.'); return; }
   const fullName=`${name} ${surn}`.trim();
   const cinTR=cin?toTR(cin):new Date().toLocaleDateString('tr-TR');
   // Çoklu ödeme hesaplama
-  const amt = ciPayments.reduce((s,p)=>s+p.amt,0);
+  const amt = comp ? 0 : ciPayments.reduce((s,p)=>s+p.amt,0);
   // Ana ödeme yöntemi — en yüksek tutarlı olanı baz al
-  const mainPay = ciPayments.length>0
+  const mainPay = comp ? 'comp' : (ciPayments.length>0
     ? ciPayments.reduce((a,b)=>a.amt>=b.amt?a:b).method
-    : 'beklemede';
-  const data={name:fullName,room,checkin:cinTR,checkout:cout?toTR(cout):'—',amt,pay:mainPay,payments:ciPayments,status,idno,bday};
+    : 'beklemede');
+  const data={name:fullName,room,checkin:cinTR,checkout:cout?toTR(cout):'—',amt,pay:mainPay,payments:comp?[]:ciPayments,status,idno,bday,kaynak,acenta,comp};
   document.getElementById('ci-btn').textContent='⏳';
   if(editId!==null){
     await sbUpdate('guests',editId,data);
@@ -1574,13 +1614,18 @@ function renderRapor(){
     const toplamGece = ci&&co ? Math.round((co-ci)/86400000) : 0;
     const uzunDonem = toplamGece>=UZUN_DONEM_ESIK;
     const bolen = uzunDonem ? daysInMonth(d) : Math.max(toplamGece,1);
-    const gunlukTutar = bolen>0 ? (g.amt||0)/bolen : 0;
-    return {...g, uzunDonem, bolen, gunlukTutar};
+    const gunlukTutar = g.comp ? 0 : (bolen>0 ? (g.amt||0)/bolen : 0);
+    const odaTipi = (rooms[g.room]&&rooms[g.room].type) || '—';
+    const kaynak = g.kaynak || 'Kapı Müşterisi';
+    return {...g, uzunDonem, bolen, gunlukTutar, odaTipi, kaynak};
   }).sort((a,b)=>a.room.localeCompare(b.room));
   const toplamTahakkuk = tahakkukList.reduce((s,g)=>s+g.gunlukTutar,0);
+  const compList = tahakkukList.filter(g=>g.comp).sort((a,b)=>a.room.localeCompare(b.room));
+  const satilanOda = tahakkukList.length - compList.length;
   window._raporTahakkukList = tahakkukList;
   window._raporTahakkukToplam = toplamTahakkuk;
   window._raporDateLabel = dateLabel;
+  window._raporIsoDate = isoDate;
 
   document.getElementById('rapor-content').innerHTML=`
     <div style="margin:12px 0 8px;font-size:15px;font-weight:700;color:var(--text)">${dateLabel}</div>
@@ -1590,6 +1635,17 @@ function renderRapor(){
       <div class="psum"><div class="psum-val" style="color:var(--green)">${73-konaklayanlar.length}</div><div class="psum-lbl">Boş Oda</div></div>
       <div class="psum"><div class="psum-val" style="color:var(--accent)">%${doluluk}</div><div class="psum-lbl">Doluluk</div></div>
     </div>
+
+    <div class="psums" style="margin-bottom:8px">
+      <div class="psum"><div class="psum-val" style="color:var(--blue)">${satilanOda}/73</div><div class="psum-lbl">🛏️ Satılan Oda</div></div>
+      <div class="psum"><div class="psum-val" style="color:var(--amber)">${compList.length}</div><div class="psum-lbl">🎁 Comp (Ücretsiz)</div></div>
+    </div>
+
+    ${compList.length>0?`
+    <div class="ocard" style="margin-bottom:12px;border:1.5px dashed var(--amber)">
+      <div class="oicon" style="background:var(--blue-bg)">🎁</div>
+      <div class="oinfo"><div class="oname">Bedava Satılan Odalar (Comp)</div><div class="odet">${compList.map(g=>g.room).join(' - ')}</div></div>
+    </div>`:''}
 
     <div class="psums" style="margin-bottom:12px">
       <div class="psum"><div class="psum-val" style="color:var(--green)">${gunGelir.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">💰 Tahsil</div></div>
@@ -1608,7 +1664,7 @@ function renderRapor(){
     ${tahakkukList.map(g=>`
       <div class="ocard" style="margin-bottom:6px">
         <div class="oicon" style="background:var(--blue-bg)">🚪</div>
-        <div class="oinfo"><div class="oname">Oda ${g.room} · ${g.name}</div><div class="odet">${g.checkin} → ${g.checkout} · ${g.uzunDonem?'Uzun dönem':'Kısa dönem'}</div></div>
+        <div class="oinfo"><div class="oname">Oda ${g.room} · ${g.name}${g.comp?' · 🎁 Comp':''}</div><div class="odet">${g.checkin} → ${g.checkout} · ${g.odaTipi} · ${g.uzunDonem?'Uzun dönem':'Kısa dönem'}<br>${g.kaynak}${g.acenta?' ('+g.acenta+')':''} · ${pLbl(g.pay)}</div></div>
         <div class="oright"><div style="font-size:13px;font-weight:700;color:var(--accent)">${g.gunlukTutar.toLocaleString('tr-TR',{maximumFractionDigits:0})}₺/gün</div></div>
       </div>`).join('')}`:''}
 
@@ -1660,6 +1716,7 @@ function loadXLSXLib(){
 
 // Oda/misafir kaydına göre renk kategorisi belirler
 function raporRenkKategori(g){
+  if(g.comp) return 'comp';
   const ad = (g.name||'').toUpperCase();
   if(ad.includes('BAKER')) return 'baker';
   if(ad.includes('ELIN')||ad.includes('ELİN')) return 'elin';
@@ -1670,49 +1727,145 @@ const RAPOR_RENKLER = {
   baker:  {fill:'BDD7EE', label:'Baker Hughes'},
   elin:   {fill:'C6E0B4', label:'Elin Elektrik'},
   gunluk: {fill:'FFE699', label:'Günlük Konaklama'},
+  comp:   {fill:'D9D9D9', label:'Comp (Ücretsiz)'},
   diger:  {fill:'FFFFFF', label:'Diğer Uzun Dönem'}
 };
+
+// Verilen ISO tarih için toplu doluluk/gelir istatistiği (Karşılaştırma sekmesi için)
+function hesaplaGunIstatistik(dateISO){
+  const trDate = toTR(dateISO);
+  const d = dateObj(trDate);
+  const UZUN_DONEM_ESIK = 28;
+  const daysInMonth = dd => new Date(dd.getFullYear(), dd.getMonth()+1, 0).getDate();
+  let dolu=0, comp=0, gelir=0;
+  (guests||[]).forEach(g=>{
+    const ci=dateObj(g.checkin), co=dateObj(g.checkout);
+    if(!ci||!co||!d) return;
+    if(ci<=d && d<=co){
+      dolu++;
+      if(g.comp){ comp++; return; }
+      const toplamGece = Math.round((co-ci)/86400000);
+      const uzunDonem = toplamGece>=UZUN_DONEM_ESIK;
+      const bolen = uzunDonem ? daysInMonth(d) : Math.max(toplamGece,1);
+      gelir += bolen>0 ? (g.amt||0)/bolen : 0;
+    }
+  });
+  const satilan = dolu-comp;
+  return {dolu, comp, satilan, gelir, adr: satilan>0?gelir/satilan:0, doluluk: dolu/73};
+}
+const isoAddDays = (iso,n)=>{ const dt=new Date(iso+'T00:00:00'); dt.setDate(dt.getDate()+n); return dt.toISOString().split('T')[0]; };
+const isoMonthStart = iso=>{ const dt=new Date(iso+'T00:00:00'); return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-01`; };
+const isoPrevMonthSameDay = iso=>{ const dt=new Date(iso+'T00:00:00'); const day=dt.getDate(); const pm=new Date(dt.getFullYear(),dt.getMonth()-1,1); const lastDay=new Date(pm.getFullYear(),pm.getMonth()+1,0).getDate(); pm.setDate(Math.min(day,lastDay)); return pm.toISOString().split('T')[0]; };
+const isoPrevMonthStart = iso=>{ const dt=new Date(iso+'T00:00:00'); const pm=new Date(dt.getFullYear(),dt.getMonth()-1,1); return pm.toISOString().split('T')[0]; };
+
+function hesaplaDonemToplam(fromISO, toISO){
+  let gelir=0, gunSayisi=0, doluluk=0;
+  let cur=fromISO;
+  while(cur<=toISO){
+    const s=hesaplaGunIstatistik(cur);
+    gelir+=s.gelir; doluluk+=s.doluluk; gunSayisi++;
+    cur=isoAddDays(cur,1);
+  }
+  return {gelir, ortalamaDoluluk: gunSayisi>0?doluluk/gunSayisi:0, gunSayisi};
+}
 
 async function exportRaporCSV(){
   const list = window._raporTahakkukList||[];
   const toplam = window._raporTahakkukToplam||0;
+  const isoDate = window._raporIsoDate || document.getElementById('rapor-tarih').value;
   if(list.length===0){ toast('Bu tarihte dolu oda yok'); return; }
   toast('Excel hazırlanıyor...');
   try{ await loadXLSXLib(); }catch(e){ toast(e.message); return; }
 
-  const header = ['Oda','Misafir','Giriş','Çıkış','Konaklama Tipi','Günlük Gelir (TL)'];
-  const aoa = [header];
+  // ═══ Sayfa 1: Günlük Rapor ═══
+  const compList = list.filter(g=>g.comp);
+  const satilanOda = list.length - compList.length;
+  const header = ['Oda','Misafir','Oda Tipi','Giriş','Çıkış','Konaklama Tipi','Kaynak / Acenta','Tahsilat','Günlük Gelir (TL)'];
+  const infoRows = [
+    ['Toplam Oda', 73, '', 'Satılan Oda', satilanOda, '', 'Comp (Ücretsiz) Oda', compList.length],
+    ['Bedava Satılan Odalar', compList.map(g=>g.room).join(' - ')||'—'],
+    []
+  ];
+  const aoa = [...infoRows, header];
   list.forEach(g=>{
-    aoa.push([g.room, g.name, g.checkin, g.checkout, g.uzunDonem?'Uzun Dönem':'Kısa Dönem', Math.round(g.gunlukTutar*100)/100]);
+    aoa.push([g.room, g.name, g.odaTipi||'—', g.checkin, g.checkout, g.uzunDonem?'Uzun Dönem':'Kısa Dönem', g.kaynak+(g.acenta?' — '+g.acenta:''), pLbl(g.pay), g.comp?0:Math.round(g.gunlukTutar*100)/100]);
   });
-  aoa.push(['','','','','TOPLAM GÜNLÜK GELİR', Math.round(toplam*100)/100]);
+  aoa.push(['','','','','','','','TOPLAM GÜNLÜK GELİR', Math.round(toplam*100)/100]);
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [{wch:8},{wch:26},{wch:12},{wch:12},{wch:16},{wch:16}];
+  ws['!cols'] = [{wch:8},{wch:24},{wch:14},{wch:12},{wch:12},{wch:14},{wch:24},{wch:16},{wch:16}];
 
+  const headerRowIdx = infoRows.length;
   const headerStyle = {font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center'}};
   header.forEach((_,ci)=>{
-    const addr = XLSX.utils.encode_cell({r:0,c:ci});
+    const addr = XLSX.utils.encode_cell({r:headerRowIdx,c:ci});
     if(ws[addr]) ws[addr].s = headerStyle;
   });
+  // bilgi satırları kalın
+  for(let ri=0; ri<infoRows.length-1; ri++){
+    for(let ci=0; ci<8; ci++){
+      const addr = XLSX.utils.encode_cell({r:ri,c:ci});
+      if(ws[addr]) ws[addr].s = {font:{bold:true}, fill:{fgColor:{rgb:'FFF2CC'}}};
+    }
+  }
 
   list.forEach((g,ri)=>{
     const kat = raporRenkKategori(g);
     const fill = RAPOR_RENKLER[kat].fill;
     for(let ci=0;ci<header.length;ci++){
-      const addr = XLSX.utils.encode_cell({r:ri+1,c:ci});
+      const addr = XLSX.utils.encode_cell({r:headerRowIdx+1+ri,c:ci});
       if(ws[addr]) ws[addr].s = {fill:{fgColor:{rgb:fill}}, border:{bottom:{style:'thin',color:{rgb:'DDDDDD'}}}};
     }
   });
 
-  const totalRow = list.length+1;
+  const totalRowIdx = headerRowIdx+1+list.length;
   for(let ci=0;ci<header.length;ci++){
-    const addr = XLSX.utils.encode_cell({r:totalRow,c:ci});
+    const addr = XLSX.utils.encode_cell({r:totalRowIdx,c:ci});
     if(ws[addr]) ws[addr].s = {font:{bold:true},fill:{fgColor:{rgb:'D9E1F2'}}};
   }
 
+  // ═══ Sayfa 2: Karşılaştırma ═══
+  const bugun = hesaplaGunIstatistik(isoDate);
+  const dun = hesaplaGunIstatistik(isoAddDays(isoDate,-1));
+  const buAy = hesaplaDonemToplam(isoMonthStart(isoDate), isoDate);
+  const gecenAy = hesaplaDonemToplam(isoPrevMonthStart(isoDate), isoPrevMonthSameDay(isoDate));
+  const fark = (a,b)=> b===0 ? (a===0?0:100) : Math.round((a-b)/b*1000)/10;
+
+  const kaoa = [
+    ['GÜNLÜK KARŞILAŞTIRMA', '', '', ''],
+    ['', 'Bugün ('+isoDate+')', 'Dün ('+isoAddDays(isoDate,-1)+')', 'Fark (%)'],
+    ['Dolu Oda', bugun.dolu, dun.dolu, fark(bugun.dolu,dun.dolu)],
+    ['Satılan Oda', bugun.satilan, dun.satilan, fark(bugun.satilan,dun.satilan)],
+    ['Doluluk (%)', Math.round(bugun.doluluk*1000)/10, Math.round(dun.doluluk*1000)/10, fark(bugun.doluluk,dun.doluluk)],
+    ['Günlük Gelir (TL)', Math.round(bugun.gelir*100)/100, Math.round(dun.gelir*100)/100, fark(bugun.gelir,dun.gelir)],
+    ['Ortalama Oda Fiyatı - ADR (TL)', Math.round(bugun.adr*100)/100, Math.round(dun.adr*100)/100, fark(bugun.adr,dun.adr)],
+    [],
+    ['AYLIK KARŞILAŞTIRMA (Ay başından bugüne)', '', '', ''],
+    ['', 'Bu Ay', 'Geçen Ay (aynı dönem)', 'Fark (%)'],
+    ['Toplam Gün', buAy.gunSayisi, gecenAy.gunSayisi, ''],
+    ['Ortalama Doluluk (%)', Math.round(buAy.ortalamaDoluluk*1000)/10, Math.round(gecenAy.ortalamaDoluluk*1000)/10, fark(buAy.ortalamaDoluluk,gecenAy.ortalamaDoluluk)],
+    ['Toplam Gelir (TL)', Math.round(buAy.gelir*100)/100, Math.round(gecenAy.gelir*100)/100, fark(buAy.gelir,gecenAy.gelir)],
+  ];
+  const kws = XLSX.utils.aoa_to_sheet(kaoa);
+  kws['!cols'] = [{wch:30},{wch:20},{wch:22},{wch:12}];
+  kws['!merges'] = [
+    {s:{r:0,c:0},e:{r:0,c:3}},
+    {s:{r:8,c:0},e:{r:8,c:3}}
+  ];
+  [0,8].forEach(r=>{
+    const addr=XLSX.utils.encode_cell({r,c:0});
+    if(kws[addr]) kws[addr].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:12},fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center'}};
+  });
+  [1,9].forEach(r=>{
+    for(let ci=0;ci<4;ci++){
+      const addr=XLSX.utils.encode_cell({r,c:ci});
+      if(kws[addr]) kws[addr].s={font:{bold:true},fill:{fgColor:{rgb:'D9E1F2'}}};
+    }
+  });
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Gunluk Rapor');
+  XLSX.utils.book_append_sheet(wb, kws, 'Karsilastirma');
   XLSX.writeFile(wb, `Dora_Gunluk_Rapor_${document.getElementById('rapor-tarih').value}.xlsx`);
   toast('✓ Rapor indirildi');
 }
