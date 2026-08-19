@@ -1644,25 +1644,76 @@ function renderRapor(){
   `;
 }
 
-function exportRaporCSV(){
+let _xlsxLibPromise=null;
+function loadXLSXLib(){
+  if(window.XLSX) return Promise.resolve();
+  if(_xlsxLibPromise) return _xlsxLibPromise;
+  _xlsxLibPromise = new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://unpkg.com/xlsx-js-style/dist/xlsx.bundle.js';
+    s.onload=()=>resolve();
+    s.onerror=()=>reject(new Error('Kütüphane yüklenemedi, internet bağlantınızı kontrol edin'));
+    document.head.appendChild(s);
+  });
+  return _xlsxLibPromise;
+}
+
+// Oda/misafir kaydına göre renk kategorisi belirler
+function raporRenkKategori(g){
+  const ad = (g.name||'').toUpperCase();
+  if(ad.includes('BAKER')) return 'baker';
+  if(ad.includes('ELIN')||ad.includes('ELİN')) return 'elin';
+  if(!g.uzunDonem) return 'gunluk';
+  return 'diger';
+}
+const RAPOR_RENKLER = {
+  baker:  {fill:'BDD7EE', label:'Baker Hughes'},
+  elin:   {fill:'C6E0B4', label:'Elin Elektrik'},
+  gunluk: {fill:'FFE699', label:'Günlük Konaklama'},
+  diger:  {fill:'FFFFFF', label:'Diğer Uzun Dönem'}
+};
+
+async function exportRaporCSV(){
   const list = window._raporTahakkukList||[];
   const toplam = window._raporTahakkukToplam||0;
-  const label = window._raporDateLabel||'';
   if(list.length===0){ toast('Bu tarihte dolu oda yok'); return; }
-  let rows = [['Oda','Misafir','Giris','Cikis','Konaklama Tipi','Gunluk Gelir (TL)']];
+  toast('Excel hazırlanıyor...');
+  try{ await loadXLSXLib(); }catch(e){ toast(e.message); return; }
+
+  const header = ['Oda','Misafir','Giriş','Çıkış','Konaklama Tipi','Günlük Gelir (TL)'];
+  const aoa = [header];
   list.forEach(g=>{
-    rows.push([g.room, g.name, g.checkin, g.checkout, g.uzunDonem?'Uzun Donem':'Kisa Donem', g.gunlukTutar.toFixed(2).replace('.',',')]);
+    aoa.push([g.room, g.name, g.checkin, g.checkout, g.uzunDonem?'Uzun Dönem':'Kısa Dönem', Math.round(g.gunlukTutar*100)/100]);
   });
-  rows.push([]);
-  rows.push(['','','','','TOPLAM GUNLUK GELIR', toplam.toFixed(2).replace('.',',')]);
-  const csv = '\uFEFF'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\r\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `Dora_Gunluk_Rapor_${document.getElementById('rapor-tarih').value}.csv`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  aoa.push(['','','','','TOPLAM GÜNLÜK GELİR', Math.round(toplam*100)/100]);
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = [{wch:8},{wch:26},{wch:12},{wch:12},{wch:16},{wch:16}];
+
+  const headerStyle = {font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center'}};
+  header.forEach((_,ci)=>{
+    const addr = XLSX.utils.encode_cell({r:0,c:ci});
+    if(ws[addr]) ws[addr].s = headerStyle;
+  });
+
+  list.forEach((g,ri)=>{
+    const kat = raporRenkKategori(g);
+    const fill = RAPOR_RENKLER[kat].fill;
+    for(let ci=0;ci<header.length;ci++){
+      const addr = XLSX.utils.encode_cell({r:ri+1,c:ci});
+      if(ws[addr]) ws[addr].s = {fill:{fgColor:{rgb:fill}}, border:{bottom:{style:'thin',color:{rgb:'DDDDDD'}}}};
+    }
+  });
+
+  const totalRow = list.length+1;
+  for(let ci=0;ci<header.length;ci++){
+    const addr = XLSX.utils.encode_cell({r:totalRow,c:ci});
+    if(ws[addr]) ws[addr].s = {font:{bold:true},fill:{fgColor:{rgb:'D9E1F2'}}};
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Gunluk Rapor');
+  XLSX.writeFile(wb, `Dora_Gunluk_Rapor_${document.getElementById('rapor-tarih').value}.xlsx`);
   toast('✓ Rapor indirildi');
 }
 
