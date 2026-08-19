@@ -1753,18 +1753,21 @@ function hesaplaGunIstatistik(dateISO){
   const satilan = dolu-comp;
   return {dolu, comp, satilan, gelir, adr: satilan>0?gelir/satilan:0, doluluk: dolu/73};
 }
-const isoAddDays = (iso,n)=>{ const dt=new Date(iso+'T00:00:00'); dt.setDate(dt.getDate()+n); return dt.toISOString().split('T')[0]; };
+const isoFmt = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+const isoAddDays = (iso,n)=>{ const dt=new Date(iso+'T00:00:00'); dt.setDate(dt.getDate()+n); return isoFmt(dt); };
 const isoMonthStart = iso=>{ const dt=new Date(iso+'T00:00:00'); return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-01`; };
-const isoPrevMonthSameDay = iso=>{ const dt=new Date(iso+'T00:00:00'); const day=dt.getDate(); const pm=new Date(dt.getFullYear(),dt.getMonth()-1,1); const lastDay=new Date(pm.getFullYear(),pm.getMonth()+1,0).getDate(); pm.setDate(Math.min(day,lastDay)); return pm.toISOString().split('T')[0]; };
-const isoPrevMonthStart = iso=>{ const dt=new Date(iso+'T00:00:00'); const pm=new Date(dt.getFullYear(),dt.getMonth()-1,1); return pm.toISOString().split('T')[0]; };
+const isoPrevMonthSameDay = iso=>{ const dt=new Date(iso+'T00:00:00'); const day=dt.getDate(); const pm=new Date(dt.getFullYear(),dt.getMonth()-1,1); const lastDay=new Date(pm.getFullYear(),pm.getMonth()+1,0).getDate(); pm.setDate(Math.min(day,lastDay)); return isoFmt(pm); };
+const isoPrevMonthStart = iso=>{ const dt=new Date(iso+'T00:00:00'); const pm=new Date(dt.getFullYear(),dt.getMonth()-1,1); return isoFmt(pm); };
 
 function hesaplaDonemToplam(fromISO, toISO){
   let gelir=0, gunSayisi=0, doluluk=0;
   let cur=fromISO;
-  while(cur<=toISO){
+  let guard=0;
+  while(cur<=toISO && guard<62){
     const s=hesaplaGunIstatistik(cur);
     gelir+=s.gelir; doluluk+=s.doluluk; gunSayisi++;
     cur=isoAddDays(cur,1);
+    guard++;
   }
   return {gelir, ortalamaDoluluk: gunSayisi>0?doluluk/gunSayisi:0, gunSayisi};
 }
