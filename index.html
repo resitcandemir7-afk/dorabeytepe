@@ -2099,19 +2099,21 @@ async function exportRaporCSV(){
     header
   ];
 
-  // Odaya göre hızlı erişim (dolu odalar) — tüm 73 oda listelenir, boş odalar sadece oda no ile görünür
+  // Odaya göre hızlı erişim (dolu odalar) — tüm 73 oda listelenir, boş odalar sadece oda no ile görünür.
+  // Comp (ücretsiz) odalar da PMS mantığında olduğu gibi ana listede boş oda gibi görünür;
+  // isim/ücret bilgileri aşağıda ayrı "Free" satırlarında verilir.
   const byRoom = {}; list.forEach(g=>{ byRoom[g.room]=g; });
   ALL_ROOMS.forEach(r=>{
     const g = byRoom[r];
-    if(!g){ aoa.push([r,'','','','','','','','','','','','']); return; }
+    if(!g || g.comp){ aoa.push([r,'','','','','','','','','','','','']); return; }
     const parts = (g.name||'').trim().split(/\s+/).filter(Boolean);
     const soyad = parts.length>1 ? parts.pop() : '';
     const adi = parts.join(' ');
     aoa.push([
-      g.room, adi, soyad, '', '', '', g.comp?'Free':'',
-      g.comp?0:Math.round(g.gunlukTutar*100)/100,
+      g.room, adi, soyad, '', '', '', '',
+      Math.round(g.gunlukTutar*100)/100,
       g.bolen||'',
-      g.comp?0:Math.round((g.amt||0)*100)/100,
+      Math.round((g.amt||0)*100)/100,
       g.checkin, g.checkout, g.acenta||''
     ]);
   });
@@ -2127,7 +2129,15 @@ async function exportRaporCSV(){
   aoa.push(['','','',satilanOda,'','','',Math.round(toplamGunlukUcret*100)/100,'ORTALAMA',Math.round(ortalamaGunlukUcret*100)/100,'','','']);
   aoa.push(['','TOPLAM ODA TL (Konukların Toplam Ödediği Tutar)','','','','','','','','',Math.round(toplamOdaTL*100)/100,'','']);
   aoa.push(['','- Toplam -','','','','','','','','','','Ortalama','']);
-  aoa.push(['','comp olan oda varsa açıklama',compList.length?compList.map(g=>`${g.room} ${g.name}`).join(', '):'—','','','','','','','','','','']);
+  // Comp (ücretsiz) odalar — PMS örneğindeki gibi ayrı satırlarda, oda no + isim + "Free"
+  const compFooterStartIdx = aoa.length;
+  compList.forEach(g=>{
+    const parts = (g.name||'').trim().split(/\s+/).filter(Boolean);
+    const soyad = parts.length>1 ? parts.pop() : '';
+    const adi = parts.join(' ');
+    aoa.push([g.room, adi, soyad, '', '', '', 'Free', '', '', '', g.checkin, g.checkout, '']);
+  });
+  if(compList.length===0) aoa.push(['','Comp (ücretsiz) oda yok','','','','','','','','','','','']);
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
   // Dar kolonlar + tek satır yüksekliği: her oda ekrana/sayfaya tek satırda sığsın, metin sarmasın
@@ -2158,11 +2168,11 @@ async function exportRaporCSV(){
 
   ALL_ROOMS.forEach((r,ri)=>{
     const g = byRoom[r];
-    const fill = g ? RAPOR_RENKLER[raporRenkKategori(g)].fill : 'F5F5F5';
-    const compFont = g && g.comp ? {strike:true, color:{rgb:'FF0000'}} : {};
+    const isBlank = !g || g.comp;
+    const fill = !isBlank ? RAPOR_RENKLER[raporRenkKategori(g)].fill : 'F5F5F5';
     for(let ci=0;ci<header.length;ci++){
       const addr = XLSX.utils.encode_cell({r:dataStartIdx+ri,c:ci});
-      if(ws[addr]) ws[addr].s = {font:F(compFont), fill:{fgColor:{rgb:fill}}, border:{bottom:{style:'thin',color:{rgb:'DDDDDD'}}}, alignment:noWrap};
+      if(ws[addr]) ws[addr].s = {font:F(), fill:{fgColor:{rgb:fill}}, border:{bottom:{style:'thin',color:{rgb:'DDDDDD'}}}, alignment:noWrap};
     }
   });
 
@@ -2171,6 +2181,13 @@ async function exportRaporCSV(){
     if(ws[addr]) ws[addr].s = {font:F({bold:true}),fill:{fgColor:{rgb:'D9E1F2'}},alignment:noWrap};
     const addr2 = XLSX.utils.encode_cell({r:footerRowIdx+1,c:ci});
     if(ws[addr2]) ws[addr2].s = {font:F({bold:true}),fill:{fgColor:{rgb:'FCE4D6'}},alignment:noWrap};
+  }
+  // Comp (ücretsiz) satırları — kırmızı üstü çizili, dikkat çeksin diye açık kırmızı zeminde
+  for(let ri=compFooterStartIdx; ri<aoa.length; ri++){
+    for(let ci=0;ci<header.length;ci++){
+      const addr = XLSX.utils.encode_cell({r:ri,c:ci});
+      if(ws[addr]) ws[addr].s = {font:F({strike:true,color:{rgb:'FF0000'}}), fill:{fgColor:{rgb:'FCE4E4'}}, alignment:noWrap};
+    }
   }
 
   // ═══ Sayfa 2: Karşılaştırma ═══
