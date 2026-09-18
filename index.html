@@ -1909,7 +1909,7 @@ function renderRapor(){
     ${compList.length>0?`
     <div class="ocard" style="margin-bottom:12px;border:1.5px dashed var(--amber)">
       <div class="oicon" style="background:var(--blue-bg)">🎁</div>
-      <div class="oinfo"><div class="oname">Bedava Satılan Odalar (Comp)</div><div class="odet">${compList.map(g=>g.room).join(' - ')}</div></div>
+      <div class="oinfo"><div class="oname">Bedava Satılan Odalar (Comp)</div><div class="odet"><span style="color:#d32f2f;text-decoration:line-through;font-weight:700">${compList.map(g=>g.room).join(' - ')}</span></div></div>
     </div>`:''}
 
     <div class="psums" style="margin-bottom:12px">
@@ -1929,7 +1929,7 @@ function renderRapor(){
     ${tahakkukList.map(g=>`
       <div class="ocard" style="margin-bottom:6px">
         <div class="oicon" style="background:var(--blue-bg)">🚪</div>
-        <div class="oinfo"><div class="oname">Oda ${g.room} · ${g.name}${g.comp?' · 🎁 Comp':''}</div><div class="odet">${g.checkin} → ${g.checkout} · ${g.odaTipi} · ${g.uzunDonem?'Uzun dönem':'Kısa dönem'}<br>${g.kaynak}${g.acenta?' ('+g.acenta+')':''} · ${pLbl(g.pay)}</div></div>
+        <div class="oinfo"><div class="oname"${g.comp?' style="color:#d32f2f;text-decoration:line-through"':''}>Oda ${g.room} · ${g.name}${g.comp?' · 🎁 Comp':''}</div><div class="odet">${g.checkin} → ${g.checkout} · ${g.odaTipi} · ${g.uzunDonem?'Uzun dönem':'Kısa dönem'}<br>${g.kaynak}${g.acenta?' ('+g.acenta+')':''} · ${pLbl(g.pay)}</div></div>
         <div class="oright"><div style="font-size:13px;font-weight:700;color:var(--accent)">${g.gunlukTutar.toLocaleString('tr-TR',{maximumFractionDigits:0})}₺/gün</div></div>
       </div>`).join('')}`:''}
 
@@ -2117,9 +2117,10 @@ async function exportRaporCSV(){
   ALL_ROOMS.forEach((r,ri)=>{
     const g = byRoom[r];
     const fill = g ? RAPOR_RENKLER[raporRenkKategori(g)].fill : 'F5F5F5';
+    const compFont = g && g.comp ? {strike:true, color:{rgb:'FF0000'}} : {};
     for(let ci=0;ci<header.length;ci++){
       const addr = XLSX.utils.encode_cell({r:dataStartIdx+ri,c:ci});
-      if(ws[addr]) ws[addr].s = {font:F(), fill:{fgColor:{rgb:fill}}, border:{bottom:{style:'thin',color:{rgb:'DDDDDD'}}}, alignment:noWrap};
+      if(ws[addr]) ws[addr].s = {font:F(compFont), fill:{fgColor:{rgb:fill}}, border:{bottom:{style:'thin',color:{rgb:'DDDDDD'}}}, alignment:noWrap};
     }
   });
 
