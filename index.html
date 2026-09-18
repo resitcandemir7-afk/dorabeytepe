@@ -1870,7 +1870,14 @@ function renderRapor(){
   const raporBugunVeyaSonrasi = (()=>{ const d=dateObj(trDate), t=dateObj(todayTR); return d&&t&&d>=t; })();
   const konaklayanlar = guests.filter(g=>{
     const ci=dateObj(g.checkin); const co=dateObj(g.checkout); const d=dateObj(trDate);
-    if(!(ci&&co&&d&&ci<=d&&d<=co)) return false;
+    if(!ci||!d||ci>d) return false;
+    if(co){
+      if(d>co) return false;
+    } else {
+      // Çıkış tarihi girilmemiş (açık uçlu / süresiz uzun dönem kiracı) — check-out yapılmadığı
+      // sürece o gün için hâlâ konaklıyor sayılır.
+      if(g.status==='Check-out') return false;
+    }
     if(raporBugunVeyaSonrasi && g.status==='Check-out') return false;
     return true;
   });
@@ -1888,7 +1895,8 @@ function renderRapor(){
   const daysInMonth = d => new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
   const tahakkukList = konaklayanlar.map(g=>{
     const ci=dateObj(g.checkin), co=dateObj(g.checkout), d=dateObj(trDate);
-    const toplamGece = ci&&co ? Math.round((co-ci)/86400000) : 0;
+    // Çıkış tarihi girilmemiş (açık uçlu) kayıtlar süresiz uzun dönem kabul edilir
+    const toplamGece = co ? Math.round((co-ci)/86400000) : Infinity;
     const uzunDonem = toplamGece>=UZUN_DONEM_ESIK;
     const bolen = uzunDonem ? daysInMonth(d) : Math.max(toplamGece,1);
     const gunlukTutar = g.comp ? 0 : (bolen>0 ? (g.amt||0)/bolen : 0);
@@ -2037,12 +2045,13 @@ function hesaplaGunIstatistik(dateISO){
   let dolu=0, comp=0, gelir=0;
   (guests||[]).forEach(g=>{
     const ci=dateObj(g.checkin), co=dateObj(g.checkout);
-    if(!ci||!co||!d) return;
+    if(!ci||!d||ci>d) return;
     if(bugunVeyaSonrasi && g.status==='Check-out') return;
-    if(ci<=d && d<=co){
+    if(co){ if(d>co) return; } else { if(g.status==='Check-out') return; }
+    {
       dolu++;
       if(g.comp){ comp++; return; }
-      const toplamGece = Math.round((co-ci)/86400000);
+      const toplamGece = co ? Math.round((co-ci)/86400000) : Infinity;
       const uzunDonem = toplamGece>=UZUN_DONEM_ESIK;
       const bolen = uzunDonem ? daysInMonth(d) : Math.max(toplamGece,1);
       gelir += bolen>0 ? (g.amt||0)/bolen : 0;
