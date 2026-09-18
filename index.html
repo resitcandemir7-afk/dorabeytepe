@@ -1248,7 +1248,11 @@ async function quickCI(id){
 }
 async function quickCO(id){
   const g=guests.find(x=>x.id===id);
-  await sbUpdate('guests',id,{status:'Check-out'});
+  const todayTR = new Date().toLocaleDateString('tr-TR');
+  const updates = {status:'Check-out'};
+  // Erken çıkış: kayıtlı çıkış tarihi bugünden ileriyse, raporlarda "hâlâ konaklıyor" görünmesin diye bugüne çekilir
+  if(g){ const co=dateObj(g.checkout), td=dateObj(todayTR); if(co&&td&&co>td) updates.checkout=todayTR; }
+  await sbUpdate('guests',id,updates);
   if(g) await addLog('check-out', g.room, g.name, `Check-out yapıldı — ${g.checkin} → ${new Date().toLocaleDateString('tr-TR')}`);
   guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); toast('✓ Check-out yapıldı');
 }
@@ -1857,10 +1861,17 @@ function renderRapor(){
   const girenler = guests.filter(g=>g.checkin===trDate);
   // O gün çıkış yapanlar
   const cikanlar = guests.filter(g=>g.checkout===trDate);
-  // O gün konaklayanlar (giriş≤tarih≤çıkış — çıkış günü de dahil, statüden bağımsız)
+  // O gün konaklayanlar (giriş≤tarih≤çıkış — çıkış günü de dahil)
+  // Not: bugün veya bugünden sonraki bir tarih için rapor alınıyorsa, çıkış tarihi ileri
+  // görünse bile status="Check-out" olan (erken çıkış yapmış) misafirler listeye dahil edilmez.
+  // Geçmiş tarihli raporlarda status bilgisi o günü yansıtmaz, bu yüzden sadece tarih aralığına bakılır.
+  const todayTR = new Date().toLocaleDateString('tr-TR');
+  const raporBugunVeyaSonrasi = (()=>{ const d=dateObj(trDate), t=dateObj(todayTR); return d&&t&&d>=t; })();
   const konaklayanlar = guests.filter(g=>{
     const ci=dateObj(g.checkin); const co=dateObj(g.checkout); const d=dateObj(trDate);
-    return ci&&co&&d&&ci<=d&&d<=co;
+    if(!(ci&&co&&d&&ci<=d&&d<=co)) return false;
+    if(raporBugunVeyaSonrasi && g.status==='Check-out') return false;
+    return true;
   });
   // O günkü gelir (o gün giriş yapanların tutarları)
   const gunGelir = girenler.filter(g=>g.pay!=='beklemede').reduce((s,g)=>s+(g.amt||0),0);
@@ -1924,6 +1935,11 @@ function renderRapor(){
       <div class="oright"><div style="font-size:16px;font-weight:800;color:var(--accent)">${toplamTahakkuk.toLocaleString('tr-TR',{maximumFractionDigits:0})}₺</div></div>
     </div>
 
+    <div class="psums" style="margin-bottom:12px">
+      <div class="psum"><div class="psum-val" style="color:var(--accent)">${(satilanOda>0?toplamTahakkuk/satilanOda:0).toLocaleString('tr-TR',{maximumFractionDigits:0})}₺</div><div class="psum-lbl">ADR (Satılan Oda Başına)</div></div>
+      <div class="psum"><div class="psum-val" style="color:var(--accent)">${(toplamTahakkuk/73).toLocaleString('tr-TR',{maximumFractionDigits:0})}₺</div><div class="psum-lbl">RevPAR (Tüm 73 Oda Başına)</div></div>
+    </div>
+
     ${konaklayanlar.length>0?`
     <div class="sec-hdr">🛏️ Bugün Dolu Odalar (${konaklayanlar.length})</div>
     ${tahakkukList.map(g=>`
@@ -1962,6 +1978,19 @@ function renderRapor(){
 
     ${girenler.length===0&&cikanlar.length===0&&gunRez.length===0?`
     <div class="loading" style="margin-top:30px">Bu tarihte işlem kaydı bulunamadı</div>`:''}
+
+    <details style="margin-top:20px;border:1px solid var(--border);border-radius:10px;padding:10px 14px;background:var(--surface2)">
+      <summary style="cursor:pointer;font-weight:700;font-size:13px;color:var(--text)">📖 Bu rakamlar nasıl hesaplanıyor?</summary>
+      <div style="margin-top:10px;font-size:12.5px;line-height:1.65;color:var(--text2)">
+        <b>Dolu Oda / Boş Oda / Doluluk:</b> Seçilen tarihte Giriş Tarihi ≤ tarih ≤ Çıkış Tarihi aralığına giren kayıtlar "dolu" sayılır (çıkış günü de dahildir). Ancak bugün veya daha ileri bir tarih için bakılıyorsa, durumu "Check-out" olan (erken çıkış yapmış) misafirler dolu sayılmaz — geçmiş tarihli raporlarda ise o günkü durumu yansıtmadığı için statüye bakılmaz. Doluluk = Dolu Oda / 73.<br><br>
+        <b>Satılan Oda / Comp (Ücretsiz):</b> Dolu odalardan "Bu oda ücretsiz (Comp)" işaretli olanlar Comp, kalanı Satılan Oda'dır. Comp odalar gelir hesaplarına dahil edilmez.<br><br>
+        <b>Günlük Tahakkuk Geliri:</b> Her dolu odanın o güne düşen payının toplamıdır (Comp odalar 0₺). Kısa dönem konaklamalarda (30 geceden az): Toplam Tutar ÷ Toplam Gece. Uzun dönem konaklamalarda (30 gece ve üzeri): Toplam Tutar aylık kabul edilip o ayın gün sayısına (28-31) bölünür.<br><br>
+        <b>Tahsil / Bekleyen:</b> O gün giriş yapan misafirlerin, ödeme türü "Beklemede" olmayan tutarları Tahsil, "Beklemede" olanlar Bekleyen sayılır.<br><br>
+        <b>ADR — Average Daily Rate (Ortalama Günlük Oda Fiyatı):</b> Günlük Tahakkuk Geliri ÷ Satılan Oda Sayısı. Sadece gerçekten satılan (Comp olmayan) odalar üzerinden hesaplanır; bir odanın günlük ortalama ne kadara satıldığını gösterir.<br><br>
+        <b>RevPAR — Revenue Per Available Room (Kullanılabilir Oda Başına Gelir):</b> Günlük Tahakkuk Geliri ÷ Toplam Oda Sayısı (73). Boş ve comp odalar da dahil, otelin TÜM kapasitesine göre gelir performansını gösterir. RevPAR = ADR × Doluluk Oranı olarak da hesaplanabilir.<br><br>
+        <i>Not: Bu hesaplamalar günlük rapor ekranına özeldir; Excel çıktısındaki "Karşılaştırma" sayfası da aynı formülleri günlük/aylık bazda kullanır.</i>
+      </div>
+    </details>
   `;
 }
 
