@@ -2045,51 +2045,78 @@ async function exportRaporCSV(){
   toast('Excel hazırlanıyor...');
   try{ await loadXLSXLib(); }catch(e){ toast(e.message); return; }
 
-  // ═══ Sayfa 1: Günlük Rapor ═══
+  // ═══ Sayfa 1: Günlük Konaklama Listesi (PMS "Asya2Xls" biçimi) ═══
   const compList = list.filter(g=>g.comp);
   const satilanOda = list.length - compList.length;
-  const header = ['Oda','Misafir','Oda Tipi','Giriş','Çıkış','Konaklama Tipi','Kaynak / Acenta','Tahsilat','Günlük Gelir (TL)'];
-  const infoRows = [
-    ['Toplam Oda', 73, '', 'Satılan Oda', satilanOda, '', 'Comp (Ücretsiz) Oda', compList.length],
-    ['Bedava Satılan Odalar', compList.map(g=>g.room).join(' - ')||'—'],
-    []
+  const header = ['Oda','Adi','Soyadi','Pansiyon','Pax','Çocuk','Free','Günlük Konaklama Ücreti','Konaklama Gece Sayısı','Oda TL','Check/In','Check/Out','Acenta'];
+  const titleRowIdx = 0, dateRowIdx = 1, headerRowIdx = 2;
+  const trTarih = (isoDate.split('-').reverse().join('/'));
+  const aoa = [
+    ['Günlük Konaklama Listesi'],
+    ['Tarih: '+trTarih],
+    header
   ];
-  const aoa = [...infoRows, header];
-  list.forEach(g=>{
-    aoa.push([g.room, g.name, g.odaTipi||'—', g.checkin, g.checkout, g.uzunDonem?'Uzun Dönem':'Kısa Dönem', g.kaynak+(g.acenta?' — '+g.acenta:''), pLbl(g.pay), g.comp?0:Math.round(g.gunlukTutar*100)/100]);
+
+  // Odaya göre hızlı erişim (dolu odalar) — tüm 73 oda listelenir, boş odalar sadece oda no ile görünür
+  const byRoom = {}; list.forEach(g=>{ byRoom[g.room]=g; });
+  ALL_ROOMS.forEach(r=>{
+    const g = byRoom[r];
+    if(!g){ aoa.push([r,'','','','','','','','','','','','']); return; }
+    const parts = (g.name||'').trim().split(/\s+/).filter(Boolean);
+    const soyad = parts.length>1 ? parts.pop() : '';
+    const adi = parts.join(' ');
+    aoa.push([
+      g.room, adi, soyad, '', '', '', g.comp?'Free':'',
+      g.comp?0:Math.round(g.gunlukTutar*100)/100,
+      g.bolen||'',
+      g.comp?0:Math.round((g.amt||0)*100)/100,
+      g.checkin, g.checkout, g.acenta||''
+    ]);
   });
-  aoa.push(['','','','','','','','TOPLAM GÜNLÜK GELİR', Math.round(toplam*100)/100]);
+
+  const dataStartIdx = headerRowIdx+1;
+  const dataEndIdx = dataStartIdx + ALL_ROOMS.length - 1; // son oda satırı
+
+  // ═══ Alt toplam satırı (PMS örneğindeki gibi: dolu oda sayısı, günlük ücret toplamı, ortalama) ═══
+  const toplamGunlukUcret = list.filter(g=>!g.comp).reduce((s,g)=>s+g.gunlukTutar,0);
+  const ortalamaGunlukUcret = satilanOda>0 ? toplamGunlukUcret/satilanOda : 0;
+  const toplamOdaTL = list.filter(g=>!g.comp).reduce((s,g)=>s+(g.amt||0),0);
+  const footerRowIdx = dataEndIdx+1;
+  aoa.push(['','','',satilanOda,'','','',Math.round(toplamGunlukUcret*100)/100,'ORTALAMA',Math.round(ortalamaGunlukUcret*100)/100,'','','']);
+  aoa.push(['','TOPLAM ODA TL (Konukların Toplam Ödediği Tutar)','','','','','','','','',Math.round(toplamOdaTL*100)/100,'','']);
+  aoa.push(['','- Toplam -','','','','','','','','','','Ortalama','']);
+  aoa.push(['','comp olan oda varsa açıklama',compList.length?compList.map(g=>`${g.room} ${g.name}`).join(', '):'—','','','','','','','','','','']);
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [{wch:8},{wch:24},{wch:14},{wch:12},{wch:12},{wch:14},{wch:24},{wch:16},{wch:16}];
+  ws['!cols'] = [{wch:7},{wch:20},{wch:16},{wch:10},{wch:6},{wch:6},{wch:7},{wch:18},{wch:12},{wch:14},{wch:12},{wch:12},{wch:16}];
+  ws['!merges'] = [
+    {s:{r:titleRowIdx,c:0},e:{r:titleRowIdx,c:12}},
+    {s:{r:dateRowIdx,c:0},e:{r:dateRowIdx,c:12}}
+  ];
 
-  const headerRowIdx = infoRows.length;
+  ws[XLSX.utils.encode_cell({r:titleRowIdx,c:0})].s = {font:{bold:true,sz:14,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center'}};
+  ws[XLSX.utils.encode_cell({r:dateRowIdx,c:0})].s = {font:{bold:true,sz:11},fill:{fgColor:{rgb:'FFF2CC'}},alignment:{horizontal:'center'}};
+
   const headerStyle = {font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center'}};
   header.forEach((_,ci)=>{
     const addr = XLSX.utils.encode_cell({r:headerRowIdx,c:ci});
     if(ws[addr]) ws[addr].s = headerStyle;
   });
-  // bilgi satırları kalın
-  for(let ri=0; ri<infoRows.length-1; ri++){
-    for(let ci=0; ci<8; ci++){
-      const addr = XLSX.utils.encode_cell({r:ri,c:ci});
-      if(ws[addr]) ws[addr].s = {font:{bold:true}, fill:{fgColor:{rgb:'FFF2CC'}}};
-    }
-  }
 
-  list.forEach((g,ri)=>{
-    const kat = raporRenkKategori(g);
-    const fill = RAPOR_RENKLER[kat].fill;
+  ALL_ROOMS.forEach((r,ri)=>{
+    const g = byRoom[r];
+    const fill = g ? RAPOR_RENKLER[raporRenkKategori(g)].fill : 'F5F5F5';
     for(let ci=0;ci<header.length;ci++){
-      const addr = XLSX.utils.encode_cell({r:headerRowIdx+1+ri,c:ci});
+      const addr = XLSX.utils.encode_cell({r:dataStartIdx+ri,c:ci});
       if(ws[addr]) ws[addr].s = {fill:{fgColor:{rgb:fill}}, border:{bottom:{style:'thin',color:{rgb:'DDDDDD'}}}};
     }
   });
 
-  const totalRowIdx = headerRowIdx+1+list.length;
   for(let ci=0;ci<header.length;ci++){
-    const addr = XLSX.utils.encode_cell({r:totalRowIdx,c:ci});
+    const addr = XLSX.utils.encode_cell({r:footerRowIdx,c:ci});
     if(ws[addr]) ws[addr].s = {font:{bold:true},fill:{fgColor:{rgb:'D9E1F2'}}};
+    const addr2 = XLSX.utils.encode_cell({r:footerRowIdx+1,c:ci});
+    if(ws[addr2]) ws[addr2].s = {font:{bold:true},fill:{fgColor:{rgb:'FCE4D6'}}};
   }
 
   // ═══ Sayfa 2: Karşılaştırma ═══
