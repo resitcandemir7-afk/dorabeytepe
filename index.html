@@ -1861,17 +1861,16 @@ function renderRapor(){
   const girenler = guests.filter(g=>g.checkin===trDate);
   // O gün çıkış yapanlar
   const cikanlar = guests.filter(g=>g.checkout===trDate);
-  // O gün konaklayanlar (giriş≤tarih<çıkış — çıkış günü hariç, o gün oda boşalmış sayılır)
-  // Not: çıkış günü odanın boşaldığı gündür (o gece kalınmaz), bu yüzden çıkış tarihinin
-  // kendisi hariç tutulur: giriş ≤ tarih < çıkış (takvim/doluluk ekranıyla aynı mantık).
-  // Ayrıca bugün veya bugünden sonraki bir tarih için rapor alınıyorsa, çıkış tarihi ileri
-  // görünse bile status="Check-out" olan (erken çıkış yapmış) misafirler listeye dahil edilmez.
+  // O gün konaklayanlar (giriş≤tarih≤çıkış — çıkış günü de dahil: o gün geceye kadar oda
+  // hâlâ o misafire ait/satılmış sayılır, gerçek erken çıkış durumu ayrıca statüyle kontrol edilir).
+  // Bugün veya bugünden sonraki bir tarih için rapor alınıyorsa, çıkış tarihi ileri görünse
+  // bile status="Check-out" olan (erken çıkış yapmış/fiilen ayrılmış) misafirler listeye dahil edilmez.
   // Geçmiş tarihli raporlarda status bilgisi o günü yansıtmaz, bu yüzden sadece tarih aralığına bakılır.
   const todayTR = new Date().toLocaleDateString('tr-TR');
   const raporBugunVeyaSonrasi = (()=>{ const d=dateObj(trDate), t=dateObj(todayTR); return d&&t&&d>=t; })();
   const konaklayanlar = guests.filter(g=>{
     const ci=dateObj(g.checkin); const co=dateObj(g.checkout); const d=dateObj(trDate);
-    if(!(ci&&co&&d&&ci<=d&&d<co)) return false;
+    if(!(ci&&co&&d&&ci<=d&&d<=co)) return false;
     if(raporBugunVeyaSonrasi && g.status==='Check-out') return false;
     return true;
   });
@@ -1984,7 +1983,7 @@ function renderRapor(){
     <details style="margin-top:20px;border:1px solid var(--border);border-radius:10px;padding:10px 14px;background:var(--surface2)">
       <summary style="cursor:pointer;font-weight:700;font-size:13px;color:var(--text)">📖 Bu rakamlar nasıl hesaplanıyor?</summary>
       <div style="margin-top:10px;font-size:12.5px;line-height:1.65;color:var(--text2)">
-        <b>Dolu Oda / Boş Oda / Doluluk:</b> Seçilen tarihte Giriş Tarihi ≤ tarih &lt; Çıkış Tarihi aralığına giren kayıtlar "dolu" sayılır. Çıkış tarihinin kendisi hariçtir — o gün oda sabah boşalır ve tekrar satılabilir kabul edilir, tıpkı takvim/doluluk ekranındaki mantık gibi. Ayrıca bugün veya daha ileri bir tarih için bakılıyorsa, durumu "Check-out" olan (erken çıkış yapmış) misafirler dolu sayılmaz — geçmiş tarihli raporlarda ise o günkü durumu yansıtmadığı için statüye bakılmaz. Doluluk = Dolu Oda / 73.<br><br>
+        <b>Dolu Oda / Boş Oda / Doluluk:</b> Seçilen tarihte Giriş Tarihi ≤ tarih ≤ Çıkış Tarihi aralığına giren kayıtlar "dolu" sayılır (çıkış günü de dahildir — o gün oda hâlâ o misafire ait/satılmış kabul edilir). Ancak bugün veya daha ileri bir tarih için bakılıyorsa, durumu "Check-out" olan (fiilen ayrılmış) misafirler dolu sayılmaz — geçmiş tarihli raporlarda ise o günkü durumu yansıtmadığı için statüye bakılmaz. Doluluk = Dolu Oda / 73.<br><br>
         <b>Satılan Oda / Comp (Ücretsiz):</b> Dolu odalardan "Bu oda ücretsiz (Comp)" işaretli olanlar Comp, kalanı Satılan Oda'dır. Comp odalar gelir hesaplarına dahil edilmez.<br><br>
         <b>Günlük Tahakkuk Geliri:</b> Her dolu odanın o güne düşen payının toplamıdır (Comp odalar 0₺). Kısa dönem konaklamalarda (30 geceden az): Toplam Tutar ÷ Toplam Gece. Uzun dönem konaklamalarda (30 gece ve üzeri): Toplam Tutar aylık kabul edilip o ayın gün sayısına (28-31) bölünür.<br><br>
         <b>Tahsil / Bekleyen:</b> O gün giriş yapan misafirlerin, ödeme türü "Beklemede" olmayan tutarları Tahsil, "Beklemede" olanlar Bekleyen sayılır.<br><br>
@@ -2033,11 +2032,14 @@ function hesaplaGunIstatistik(dateISO){
   const d = dateObj(trDate);
   const UZUN_DONEM_ESIK = 28;
   const daysInMonth = dd => new Date(dd.getFullYear(), dd.getMonth()+1, 0).getDate();
+  const todayTR = new Date().toLocaleDateString('tr-TR');
+  const bugunVeyaSonrasi = (()=>{ const t=dateObj(todayTR); return d&&t&&d>=t; })();
   let dolu=0, comp=0, gelir=0;
   (guests||[]).forEach(g=>{
     const ci=dateObj(g.checkin), co=dateObj(g.checkout);
     if(!ci||!co||!d) return;
-    if(ci<=d && d<co){
+    if(bugunVeyaSonrasi && g.status==='Check-out') return;
+    if(ci<=d && d<=co){
       dolu++;
       if(g.comp){ comp++; return; }
       const toplamGece = Math.round((co-ci)/86400000);
