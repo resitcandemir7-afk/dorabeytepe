@@ -1,4 +1,4 @@
-const CACHE = 'otel-panel-v4';
+const CACHE = 'otel-panel-v5';
 const ASSETS = ['/', '/index.html'];
 
 self.addEventListener('install', e => {

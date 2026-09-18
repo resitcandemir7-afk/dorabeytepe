@@ -121,6 +121,24 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .rd-today{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
 .rd-soon{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);}
 .rd-future{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+.rd-past{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
+.rd-cancel{background:var(--surface3);color:var(--text2);border:1px solid var(--border-md);text-decoration:line-through;}
+.rez-card.rc-past{border-left:4px solid var(--amber);}
+.rez-card .gright{max-width:40%;}
+.rez-card .rdays{white-space:normal;text-align:center;line-height:1.3;}
+.rez-card.rc-cancel{border-left:4px solid var(--border-md);opacity:.6;}
+.rz-money{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;padding:7px 10px;background:var(--surface2);border-radius:6px;font-size:12px;color:var(--text2);}
+.rz-money strong{color:var(--text);font-family:'DM Mono',monospace;}
+.rz-note{margin-top:7px;font-size:12px;color:var(--text2);white-space:pre-wrap;}
+.rz-durum{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;vertical-align:middle;margin-left:4px;}
+.rz-opsiyon{background:var(--amber-bg);color:var(--amber);}
+.rz-iptal{background:var(--red-bg);color:var(--red);}
+.rz-rooms{margin-top:8px;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.rz-room-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);}
+.rz-room-row:last-child{border-bottom:none;}
+.rz-room-row.rz-cf{background:#fffbf0;}
+.rz-room-row small{color:var(--text2);}
+.rz-chip{display:inline-block;padding:3px 8px;border-radius:12px;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.08);font-size:11px;color:var(--text);cursor:pointer;}
 .ext-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:9px 0;}
 .ext-opt{padding:11px 5px;border-radius:var(--rs);border:1.5px solid var(--border-md);background:var(--surface2);font-size:13px;font-weight:600;cursor:pointer;text-align:center;color:var(--text2);font-family:'DM Sans',sans-serif;}
 .ext-opt.sel{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
@@ -420,14 +438,36 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
         <div id="sq-result" style="margin-top:10px"></div>
       </div>
 
+      <div id="rez-ext-banner" style="display:none;margin:10px 14px 0;background:var(--blue-bg);border:1.5px solid var(--blue-bd);border-radius:var(--rs);padding:10px 12px;font-size:12px;color:#0d3d75">
+        <strong>ℹ️ Yeni rezervasyon alanları için veritabanı güncellemesi gerekiyor.</strong><br>
+        Toplam tutar, kaynak, e-posta ve durum bilgileri şimdilik "Not" alanının içine kaydediliyor (veri kaybı olmaz). Supabase → SQL Editor'da aşağıdaki komutu bir kez çalıştırınca otomatik olarak kendi sütunlarına taşınır.
+        <div style="display:flex;gap:6px;margin-top:8px"><button class="abtn" style="background:var(--blue);color:#fff" onclick="copyRezSql()">📋 SQL'i Kopyala</button><button class="abtn" style="background:var(--surface);border:1px solid var(--border-md)" onclick="probeRezExt(true)">🔄 Tekrar Kontrol Et</button></div>
+      </div>
+      <div class="sec-hdr" style="margin-top:10px">Rezervasyon Özeti</div>
+      <div class="psums" id="rez-sums"></div>
       <div id="rez-alerts"></div>
-      <div class="toolbar" style="padding-bottom:0">
-        <input class="search" type="search" id="rez-search" placeholder="İsim veya oda ara..." oninput="renderRez()" style="flex:1">
+      <div class="toolbar" style="padding-bottom:0;flex-wrap:wrap">
+        <input class="search" type="search" id="rez-search" placeholder="İsim, oda, telefon veya not ara..." oninput="renderRez()" style="flex:1;min-width:150px">
         <select class="fsel" id="rez-filter" onchange="renderRez()">
-          <option value="all">Tümü</option>
-          <option value="soon">Yaklaşan (7 gün)</option>
+          <option value="active">Aktif (bugün ve sonrası)</option>
+          <option value="today">📍 Bugün giriş</option>
+          <option value="tomorrow">➡️ Yarın giriş</option>
+          <option value="week">Bu hafta (7 gün)</option>
+          <option value="month">Bu ay (30 gün)</option>
+          <option value="staying">🏨 Konaklama süresinde</option>
+          <option value="past">⏰ Geçmiş / işlem bekleyen</option>
           <option value="conflict">⚠️ Çakışma</option>
+          <option value="unpaid">💰 Ödeme bekleyen</option>
+          <option value="cancel">✕ İptal edilenler</option>
+          <option value="all">Tümü</option>
         </select>
+        <select class="fsel" id="rez-sort" onchange="renderRez()">
+          <option value="cin">Girişe göre</option>
+          <option value="room">Odaya göre</option>
+          <option value="name">İsme göre</option>
+          <option value="new">Son eklenen</option>
+        </select>
+        <button class="abtn" id="rez-group-btn" style="flex:0;background:var(--surface);border:1px solid var(--border-md)" onclick="toggleRezGroup()">👥 Grupla</button>
         <button class="btn-new" style="font-size:12px;padding:8px 12px" onclick="openRezModal()">+ Rezervasyon</button>
       </div>
       <div class="sec-hdr" id="rez-hdr">Rezervasyonlar</div>
@@ -651,24 +691,52 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
   <div class="msheet">
     <div class="mhandle"></div>
     <div class="mtitle" id="rez-title">Yeni Rezervasyon</div>
+    <div class="sec-hdr" style="padding:4px 0 6px">👤 Misafir</div>
     <div class="frow">
-      <div class="fgrp"><label class="flbl">Ad</label><input class="finput" type="text" id="rz-name" placeholder="Ahmet"></div>
+      <div class="fgrp"><label class="flbl">Ad *</label><input class="finput" type="text" id="rz-name" placeholder="Ahmet"></div>
       <div class="fgrp"><label class="flbl">Soyad</label><input class="finput" type="text" id="rz-surn" placeholder="Yılmaz"></div>
     </div>
     <div class="frow">
       <div class="fgrp"><label class="flbl">Telefon</label><input class="finput" type="tel" id="rz-phone" placeholder="05xx xxx xx xx"></div>
-      <div class="fgrp"><label class="flbl">Kişi Sayısı</label><input class="finput" type="number" id="rz-persons" placeholder="2"></div>
+      <div class="fgrp"><label class="flbl">Kişi Sayısı</label><input class="finput" type="number" id="rz-persons" placeholder="2" min="1"></div>
+    </div>
+    <div class="fgrp"><label class="flbl">E-posta (isteğe bağlı)</label><input class="finput" type="email" id="rz-email" placeholder="ornek@mail.com"></div>
+    <div class="sec-hdr" style="padding:8px 0 6px">🛏 Konaklama</div>
+    <div class="frow">
+      <div class="fgrp"><label class="flbl">Giriş Tarihi *</label><input class="finput" type="date" id="rz-cin" oninput="checkRezConflict();updateRezCalc()"></div>
+      <div class="fgrp"><label class="flbl">Çıkış Tarihi *</label><input class="finput" type="date" id="rz-cout" oninput="checkRezConflict();updateRezCalc()"></div>
     </div>
     <div class="frow">
-      <div class="fgrp"><label class="flbl">Oda No</label><select class="finput" id="rz-room"><option value="">Seç...</option></select></div>
-      <div class="fgrp"><label class="flbl">Ön Ödeme (₺)</label><input class="finput" type="number" id="rz-deposit" placeholder="500"></div>
+      <div class="fgrp"><label class="flbl">Oda No *</label><select class="finput" id="rz-room"><option value="">Seç...</option></select></div>
+      <div class="fgrp"><label class="flbl">Durum</label><select class="finput" id="rz-durum"><option value="onayli">✅ Onaylı</option><option value="opsiyon">⏳ Opsiyon (kesinleşmedi)</option><option value="iptal">✕ İptal</option></select></div>
+    </div>
+    <div id="rz-roominfo" style="display:none;font-size:12px;color:var(--text2);margin:-4px 0 10px;padding:8px 10px;background:var(--surface2);border-radius:var(--rs)"></div>
+    <div id="rz-warn" style="display:none;margin:0 0 10px" class="rez-alert"><div>⚠️ <span id="rz-warn-txt"></span></div></div>
+    <div class="frow">
+      <div class="fgrp"><label class="flbl">Kaynak</label><select class="finput" id="rz-kaynak" onchange="onRezKaynakChange()">
+        <option value="Kapı Müşterisi">🚪 Kapı Müşterisi</option>
+        <option value="Telefon">📞 Telefon</option>
+        <option value="WhatsApp">📱 WhatsApp</option>
+        <option value="Booking">🌐 Booking.com</option>
+        <option value="Expedia">🌐 Expedia</option>
+        <option value="Agoda">🌐 Agoda</option>
+        <option value="Kurumsal">🏢 Kurumsal / Şirket</option>
+        <option value="Acenta">🏢 Acenta</option>
+        <option value="Grup">👥 Grup / Düğün</option>
+      </select></div>
+      <div class="fgrp" id="rz-acenta-wrap" style="display:none"><label class="flbl">Şirket / Acenta Adı</label><input class="finput" type="text" id="rz-acenta" placeholder="Baker Hughes, Elin Elektrik..."></div>
+    </div>
+    <div class="sec-hdr" style="padding:8px 0 6px">💰 Ücret</div>
+    <div class="frow">
+      <div class="fgrp"><label class="flbl">Toplam Tutar (₺)</label><input class="finput" type="number" id="rz-total" placeholder="21000" oninput="updateRezCalc()"></div>
+      <div class="fgrp"><label class="flbl">Gecelik (₺)</label><input class="finput" type="number" id="rz-nightly" placeholder="3000" oninput="updateRezCalcFromNightly()"></div>
     </div>
     <div class="frow">
-      <div class="fgrp"><label class="flbl">Giriş Tarihi</label><input class="finput" type="date" id="rz-cin" oninput="checkRezConflict()"></div>
-      <div class="fgrp"><label class="flbl">Çıkış Tarihi</label><input class="finput" type="date" id="rz-cout" oninput="checkRezConflict()"></div>
+      <div class="fgrp"><label class="flbl">Alınan Ön Ödeme (₺)</label><input class="finput" type="number" id="rz-deposit" placeholder="0" oninput="updateRezCalc()"></div>
+      <div class="fgrp"><label class="flbl">Ön Ödeme Yöntemi</label><select class="finput" id="rz-depm"><option value="">—</option><option value="nakit">💵 Nakit</option><option value="kart">💳 Kart</option><option value="iban">🏦 IBAN / Havale</option></select></div>
     </div>
-    <div id="rz-warn" style="display:none" class="rez-alert"><div>⚠️ <span id="rz-warn-txt"></span></div></div>
-    <div class="fgrp"><label class="flbl">Not</label><input class="finput" type="text" id="rz-note" placeholder="Özel istek..."></div>
+    <div id="rz-calc" style="font-size:12px;color:var(--text2);margin:-4px 0 10px;padding:8px 10px;background:var(--accent-bg);border-radius:var(--rs);display:none"></div>
+    <div class="fgrp"><label class="flbl">Not / Özel İstek</label><textarea class="finput" id="rz-note" rows="2" placeholder="Geç giriş, üst kat, çift yatak..." style="resize:vertical;min-height:44px"></textarea></div>
     <div class="mactions">
       <button class="mcancel" onclick="closeRezModal()">İptal</button>
       <button class="mconfirm" id="rez-btn" onclick="saveRez()">Kaydet</button>
@@ -900,7 +968,8 @@ const toTR  = d => { if(!d) return '—'; const p=d.split('-'); return p.length=
 const fmtBday = d => { try{ return new Date(d).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}); }catch(e){ return d||''; } };
 const isBdayToday = d => { if(!d) return false; const p=d.split('-'); if(p.length<3) return false; const now=new Date(); return parseInt(p[1])===now.getMonth()+1&&parseInt(p[2])===now.getDate(); };
 const dateObj = d => { if(!d||d==='—') return null; const p=d.includes('.')?d.split('.'):d.split('-'); return d.includes('.')?new Date(+p[2],+p[1]-1,+p[0]):new Date(+p[0],+p[1]-1,+p[2]); };
-const daysDiff = d => { const o=dateObj(d); if(!o) return 999; return Math.round((o-new Date())/86400000); };
+const todayMid = () => { const t=new Date(); t.setHours(0,0,0,0); return t; };
+const daysDiff = d => { const o=dateObj(d); if(!o) return 999; return Math.round((o-todayMid())/86400000); };
 const stayDays = g => { const o=dateObj(g.checkin); if(!o) return 0; return Math.floor((new Date()-o)/86400000); };
 
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
@@ -928,7 +997,7 @@ async function switchTab(tab, el){
   if(tab==='rooms'){ guests=await sbSelect('guests','order=id.desc'); await loadTmz(); await loadRooms(); renderRooms(); }
   if(tab==='pay'){ guests=await sbSelect('guests','order=id.desc'); renderPay(); }
   if(tab==='gelirler'){ guests=await sbSelect('guests','order=id.desc'); rez=await sbSelect('rezervasyonlar','order=id.asc'); renderGelirler(); }
-  if(tab==='rez'){ rez=await sbSelect('rezervasyonlar','order=id.asc'); renderRez(); }
+  if(tab==='rez'){ rez=await sbSelect('rezervasyonlar','order=id.asc'); renderRez(); if(REZ_EXT===null) probeRezExt(false); }
   if(tab==='longstay'){ guests=await sbSelect('guests','order=id.desc'); renderLongStay(); }
   if(tab==='fiyat'){ guests=await sbSelect('guests','order=id.desc'); renderFiyatlar(); }
   if(tab==='temizlik'){ guests=await sbSelect('guests','order=id.desc'); await loadTmz(); renderTemizlik(); }
@@ -1451,6 +1520,7 @@ function sorgula(){
     if(ci&&co&&cin<co&&cout>ci) doluOdalar.add(g.room);
   });
   rez.forEach(r=>{
+    if(rezData(r).durum==='iptal') return;
     if(!r.cout||r.cout==='—') { doluOdalar.add(r.room); return; }
     const ci=dateObj(r.cin); const co=dateObj(r.cout);
     if(ci&&co&&cin<co&&cout>ci) doluOdalar.add(r.room);
@@ -1514,45 +1584,194 @@ function isRoomConflict(room,cinISO,coutISO,skipId){
   const cin=new Date(cinISO); const cout=new Date(coutISO);
   const gc=guests.find(g=>g.room===room&&g.status!=='Check-out'&&(()=>{ const i=dateObj(g.checkin); const o=dateObj(g.checkout); return i&&o&&cin<o&&cout>i; })());
   if(gc) return `${gc.name} bu odada (çıkış: ${gc.checkout})`;
-  const rc=rez.find(r=>r.room===room&&r.id!==skipId&&(()=>{ const i=dateObj(r.cin); const o=dateObj(r.cout); return i&&o&&cin<o&&cout>i; })());
+  const rc=rez.find(r=>r.room===room&&r.id!==skipId&&rezData(r).durum!=='iptal'&&(()=>{ const i=dateObj(r.cin); const o=dateObj(r.cout); return i&&o&&cin<o&&cout>i; })());
   if(rc) return `${rc.name} adına rezervasyon var`;
   return null;
 }
 
-function renderRez(){
-  const filter=document.getElementById('rez-filter')?.value||'all';
-  const q=(document.getElementById('rez-search')?.value||'').toLowerCase().trim();
-  let list=[...rez].sort((a,b)=>(dateObj(a.cin)||0)-(dateObj(b.cin)||0));
-  if(filter==='soon') list=list.filter(r=>{ const d=daysDiff(r.cin); return d>=0&&d<=7; });
-  if(filter==='conflict') list=list.filter(r=>!!isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id));
-  if(q) list=list.filter(r=>
-    (r.name&&r.name.toLowerCase().includes(q))||
-    (r.room&&r.room.includes(q))||
-    (r.phone&&r.phone.includes(q))
-  );
-  const alerts=rez.filter(r=>{ const d=daysDiff(r.cin); return d>=0&&d<=3; });
-  document.getElementById('rez-alerts').innerHTML=alerts.map(r=>{ const d=daysDiff(r.cin); const lbl=d===0?'Bugün giriş!':d===1?'Yarın giriş':''+d+' gün sonra'; const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id); return `<div class="rez-alert">🔔 <div><strong>${r.name} — Oda ${r.room}:</strong> ${lbl}${cf?` <span style="color:#c0242a;font-weight:700">⚠️ ${cf}</span>`:''}</div></div>`; }).join('');
-  document.getElementById('tab-rez').textContent=alerts.length>0?`📋 Rezervasyon 🔴${alerts.length}`:'📋 Rezervasyon';
-  document.getElementById('rez-hdr').textContent=`Rezervasyonlar (${list.length})`;
-  document.getElementById('rez-list').innerHTML=list.length===0?`<div class="loading">Rezervasyon bulunamadı</div>`:list.map(r=>{ const d=daysDiff(r.cin); const nights=Math.max(0,Math.round((dateObj(r.cout)-dateObj(r.cin))/86400000)); const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id); let cls='rez-card rc-future',db=`<span class="rdays rd-future">${d} gün sonra</span>`; if(d===0){cls='rez-card rc-soon';db=`<span class="rdays rd-today">Bugün</span>`;} else if(d<=7){cls='rez-card rc-soon';db=`<span class="rdays rd-soon">${d} gün sonra</span>`;} if(cf) cls+=' rc-conflict'; return `<div class="${cls}"><div class="gtop"><div class="avatar">${ini(r.name)}</div><div class="ginfo"><div class="gname">${r.name}</div><div class="gmeta">Oda <strong>${r.room}</strong> · ${r.cin} → ${r.cout} · ${nights} gece</div>${r.phone?`<div class="gmeta">📞 ${r.phone}</div>`:''}</div><div class="gright">${db}${r.deposit?`<div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:4px">${r.deposit.toLocaleString('tr-TR')}₺ ön</div>`:''}</div></div>${cf?`<div style="margin-top:8px;padding:8px;background:#fff3d6;border-radius:6px;font-size:12px;color:#7a4500">⚠️ ${cf}</div>`:''}<div class="card-actions" style="margin-top:9px;padding-top:9px;border-top:1px solid var(--border)"><button class="abtn a-edit" onclick="editRez(${r.id})">✏️ Düzenle</button>${r.phone?`<button class="abtn" style="background:#25d366;color:#fff;border:none" onclick="sendWhatsApp(${r.id})">📱 WhatsApp</button>`:''} ${d>=0&&d<=1?`<button class="abtn a-in" onclick="rezToCI(${r.id})">✓ Check-in'e Al</button>`:''}<button class="abtn a-del" style="flex:0;padding:7px 10px" onclick="delRez(${r.id})">✕</button></div></div>`; }).join('');
+// ── Genişletilmiş rezervasyon alanları (total, kaynak, acenta, dep_method, email, durum) ──
+// Sütunlar Supabase'de yoksa veriler Not alanının sonuna ⟦rz:...⟧ işaretiyle gömülür; sütunlar eklenince otomatik taşınır.
+const REZ_EXT_COLS=['total','kaynak','acenta','dep_method','email','durum'];
+let REZ_EXT=null, rezGroupMode=false;
+const REZ_SQL=`alter table rezervasyonlar
+  add column if not exists total integer default 0,
+  add column if not exists kaynak text,
+  add column if not exists acenta text,
+  add column if not exists dep_method text,
+  add column if not exists email text,
+  add column if not exists durum text default 'onayli';`;
+const RZ_MARK=/\s*⟦rz:([^⟧]*)⟧\s*$/;
+function rezParseNote(note){ note=note||''; const ex={}; const m=note.match(RZ_MARK); if(m){ m[1].split(';').forEach(kv=>{ const i=kv.indexOf('='); if(i>0){ try{ ex[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1)); }catch(e){} } }); note=note.replace(RZ_MARK,'').trim(); } return {note,ex}; }
+function rezPackNote(note,ex){ const parts=Object.entries(ex).filter(([k,v])=>v!==''&&v!==null&&v!==undefined&&v!==0&&v!=='0').map(([k,v])=>k+'='+encodeURIComponent(v)); return parts.length?`${(note||'').trim()} ⟦rz:${parts.join(';')}⟧`.trim():(note||'').trim(); }
+// Normalize edilmiş görünüm: sütun varsa sütun, yoksa nottaki işaret, o da yoksa varsayılan
+function rezData(r){ const {note,ex}=rezParseNote(r.note); const pick=(k,def)=>{ const c=r[k]; if(c!==undefined&&c!==null&&c!==''&&c!==0) return c; if(ex[k]!==undefined&&ex[k]!=='') return ex[k]; return def; }; return { note, total:parseInt(pick('total',0))||0, kaynak:pick('kaynak','Kapı Müşterisi'), acenta:pick('acenta',''), dep_method:pick('dep_method',''), email:pick('email',''), durum:pick('durum','onayli'), hasMark:Object.keys(ex).length>0 }; }
+async function probeRezExt(manual){ try{ const r=await fetch(`${SB_URL}/rest/v1/rezervasyonlar?select=${REZ_EXT_COLS.join(',')}&limit=1`,{headers:H}); REZ_EXT=r.ok; }catch(e){ REZ_EXT=false; } const b=document.getElementById('rez-ext-banner'); if(b) b.style.display=REZ_EXT?'none':'block'; if(REZ_EXT) await migrateRezExtras(); if(manual) toast(REZ_EXT?'✓ Yeni alanlar aktif':'Sütunlar henüz eklenmemiş'); }
+async function migrateRezExtras(){ const todo=rez.filter(r=>rezParseNote(r.note).ex&&Object.keys(rezParseNote(r.note).ex).length>0); if(!todo.length) return; let n=0; for(const r of todo){ const x=rezData(r); const ok=await sbUpdate('rezervasyonlar',r.id,{note:x.note,total:x.total,kaynak:x.kaynak,acenta:x.acenta,dep_method:x.dep_method,email:x.email,durum:x.durum}); if(ok) n++; } if(!n) return; rez=await sbSelect('rezervasyonlar','order=id.asc'); renderRez(); toast(`✓ ${n} rezervasyonun ek bilgileri sütunlara taşındı`); }
+function copyRezSql(){ navigator.clipboard?.writeText(REZ_SQL).then(()=>toast('✓ SQL kopyalandı — Supabase SQL Editor\'a yapıştırın')).catch(()=>prompt('SQL komutu:',REZ_SQL)); }
+const rezNights=r=>{ const a=dateObj(r.cin), b=dateObj(r.cout); return a&&b?Math.max(0,Math.round((b-a)/86400000)):0; };
+const fmtTL=n=>(n||0).toLocaleString('tr-TR')+'₺';
+const KAYNAK_ICON={'Kapı Müşterisi':'🚪','Telefon':'📞','WhatsApp':'📱','Booking':'🌐','Expedia':'🌐','Agoda':'🌐','Kurumsal':'🏢','Acenta':'🏢','Grup':'👥'};
+const DURUM_LBL={onayli:'✅ Onaylı',opsiyon:'⏳ Opsiyon',iptal:'✕ İptal'};
+
+// Rezervasyonun zaman durumu — bugün gece yarısına göre (saat farkı yüzünden "yarın"ın "bugün" görünmesi engellenir)
+function rezState(r){
+  const x=rezData(r); const d=daysDiff(r.cin); const dout=(r.cout&&r.cout!=='—')?daysDiff(r.cout):null;
+  if(x.durum==='iptal') return {key:'cancel',lbl:'İptal edildi',cls:'rd-cancel',card:'rc-cancel',d};
+  if(d===0) return {key:'today',lbl:'📍 Bugün giriş',cls:'rd-today',card:'rc-soon',d};
+  if(d===1) return {key:'tomorrow',lbl:'➡️ Yarın giriş',cls:'rd-soon',card:'rc-soon',d};
+  if(d>1&&d<=7) return {key:'week',lbl:`${d} gün sonra`,cls:'rd-soon',card:'rc-soon',d};
+  if(d>7) return {key:'future',lbl:`${d} gün sonra`,cls:'rd-future',card:'rc-future',d};
+  if(dout!==null&&dout>=0) return {key:'staying',lbl:dout===0?'⏰ Bugün çıkış':'⏰ Girişi geçti',cls:'rd-past',card:'rc-past',d};
+  return {key:'past',lbl:`⏰ ${Math.abs(d)} gün geçti`,cls:'rd-past',card:'rc-past',d};
 }
 
-function fillRezRoomSel(){ const sel=document.getElementById('rz-room'); sel.innerHTML='<option value="">Oda seç...</option>'; [1,2,3].forEach(f=>{ const og=document.createElement('optgroup'); og.label=f+'. Kat'; FLOORS[f].forEach(r=>{ const o=document.createElement('option'); o.value=r; o.textContent=r; og.appendChild(o); }); sel.appendChild(og); }); }
+function renderRez(){
+  const filter=document.getElementById('rez-filter')?.value||'active';
+  const sort=document.getElementById('rez-sort')?.value||'cin';
+  const q=(document.getElementById('rez-search')?.value||'').toLowerCase().trim();
+  const all=rez.map(r=>({r,s:rezState(r),x:rezData(r)}));
+  const active=all.filter(o=>o.s.key!=='cancel');
+  // Özet kutuları
+  const cnt=k=>active.filter(o=>o.s.key===k).length;
+  const upcoming=active.filter(o=>o.s.d>=0);
+  const pending=active.filter(o=>o.s.key==='past'||o.s.key==='staying');
+  const onodeme=upcoming.reduce((s,o)=>s+(o.r.deposit||0),0);
+  const beklenen=upcoming.reduce((s,o)=>s+(o.x.total||0),0);
+  const sums=document.getElementById('rez-sums');
+  if(sums) sums.innerHTML=`
+    <div class="psum" style="cursor:pointer" onclick="setRezFilter('today')"><div class="psum-val" style="color:var(--red)">${cnt('today')}</div><div class="psum-lbl">📍 Bugün Giriş</div></div>
+    <div class="psum" style="cursor:pointer" onclick="setRezFilter('tomorrow')"><div class="psum-val" style="color:var(--blue)">${cnt('tomorrow')}</div><div class="psum-lbl">➡️ Yarın Giriş</div></div>
+    <div class="psum" style="cursor:pointer" onclick="setRezFilter('week')"><div class="psum-val" style="color:var(--blue)">${cnt('today')+cnt('tomorrow')+cnt('week')}</div><div class="psum-lbl">7 Gün İçinde</div></div>
+    <div class="psum" style="cursor:pointer" onclick="setRezFilter('past')"><div class="psum-val" style="color:${pending.length?'var(--amber)':'var(--text3)'}">${pending.length}</div><div class="psum-lbl">⏰ İşlem Bekleyen</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--accent)">${onodeme.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">Alınan Ön Ödeme</div></div>
+    <div class="psum"><div class="psum-val" style="color:var(--green)">${beklenen.toLocaleString('tr-TR')}₺</div><div class="psum-lbl">Beklenen Gelir (${upcoming.length} rez.)</div></div>`;
+  // Filtre
+  let list=all;
+  if(filter==='active') list=active.filter(o=>o.s.d>=0||o.s.key==='staying');
+  else if(filter==='today') list=active.filter(o=>o.s.key==='today');
+  else if(filter==='tomorrow') list=active.filter(o=>o.s.key==='tomorrow');
+  else if(filter==='week') list=active.filter(o=>o.s.d>=0&&o.s.d<=7);
+  else if(filter==='month') list=active.filter(o=>o.s.d>=0&&o.s.d<=30);
+  else if(filter==='staying') list=active.filter(o=>o.s.key==='staying');
+  else if(filter==='past') list=pending;
+  else if(filter==='conflict') list=active.filter(o=>!!isRoomConflict(o.r.room,toISO(o.r.cin),toISO(o.r.cout),o.r.id));
+  else if(filter==='unpaid') list=active.filter(o=>o.s.d>=-1&&(o.x.total||0)>(o.r.deposit||0));
+  else if(filter==='cancel') list=all.filter(o=>o.s.key==='cancel');
+  if(q) list=list.filter(({r,x})=>(r.name&&r.name.toLowerCase().includes(q))||(r.room&&r.room.includes(q))||(r.phone&&r.phone.includes(q))||(x.note&&x.note.toLowerCase().includes(q))||(x.acenta&&x.acenta.toLowerCase().includes(q))||(x.kaynak&&x.kaynak.toLowerCase().includes(q)));
+  // Sıralama
+  const byCin=(a,b)=>((dateObj(a.r.cin)||0)-(dateObj(b.r.cin)||0))||(parseInt(a.r.room)-parseInt(b.r.room));
+  if(sort==='cin') list.sort(byCin);
+  if(sort==='room') list.sort((a,b)=>(parseInt(a.r.room)-parseInt(b.r.room))||byCin(a,b));
+  if(sort==='name') list.sort((a,b)=>a.r.name.localeCompare(b.r.name,'tr')||byCin(a,b));
+  if(sort==='new') list.sort((a,b)=>b.r.id-a.r.id);
+  // Uyarılar: bugün / yarın / işlem bekleyen
+  const alertGroups=[
+    {key:'today',title:'📍 Bugün giriş',style:'background:var(--red-bg);border-color:var(--red-bd);color:var(--red)'},
+    {key:'tomorrow',title:'➡️ Yarın giriş',style:'background:var(--blue-bg);border-color:var(--blue-bd);color:#0d3d75'},
+    {key:'pending',title:'⏰ İşlem bekleyen (girişi geçmiş, check-in yapılmamış)',style:''}
+  ];
+  document.getElementById('rez-alerts').innerHTML=alertGroups.map(ag=>{
+    const items=(ag.key==='pending'?pending:active.filter(o=>o.s.key===ag.key)).slice().sort(byCin);
+    if(!items.length) return '';
+    return `<div class="rez-alert" style="${ag.style}"><div style="flex:1"><strong>${ag.title} · ${items.length}</strong><div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${items.map(({r,s})=>{ const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id); return `<span class="rz-chip" title="${r.cin} → ${r.cout}" onclick="document.getElementById('rez-search').value='${r.room}';renderRez()"><strong>${r.room}</strong> ${r.name}${ag.key==='pending'?` <small>(${r.cin})</small>`:''}${cf?' ⚠️':''}</span>`; }).join('')}</div></div></div>`;
+  }).join('');
+  const badge=cnt('today')+pending.length;
+  document.getElementById('tab-rez').textContent=badge>0?`📋 Rezervasyon 🔴${badge}`:'📋 Rezervasyon';
+  document.getElementById('rez-group-btn').style.background=rezGroupMode?'var(--accent)':'var(--surface)';
+  document.getElementById('rez-group-btn').style.color=rezGroupMode?'#fff':'var(--text)';
+  document.getElementById('rez-hdr').textContent=`Rezervasyonlar (${list.length}${list.length!==active.length?' / '+active.length+' aktif':''})`;
+  const el=document.getElementById('rez-list');
+  if(list.length===0){ el.innerHTML=`<div class="loading">Bu filtrede rezervasyon yok</div>`; return; }
+  if(!rezGroupMode){ el.innerHTML=list.map(o=>rezCard(o)).join(''); return; }
+  // Grup görünümü: aynı isim + aynı tarih aralığı = tek kart
+  const groups=new Map();
+  list.forEach(o=>{ const k=o.r.name.trim().toLowerCase()+'|'+o.r.cin+'|'+o.r.cout; if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(o); });
+  el.innerHTML=[...groups.values()].map(g=>g.length===1?rezCard(g[0]):rezGroupCard(g)).join('');
+}
+function setRezFilter(v){ const f=document.getElementById('rez-filter'); if(f){ f.value=v; renderRez(); } }
+function toggleRezGroup(){ rezGroupMode=!rezGroupMode; renderRez(); }
 
-function openRezModal(){ editRezId=null; document.getElementById('rez-title').textContent='Yeni Rezervasyon'; document.getElementById('rez-btn').textContent='Kaydet'; ['rz-name','rz-surn','rz-phone','rz-deposit','rz-note'].forEach(id=>document.getElementById(id).value=''); document.getElementById('rz-persons').value=''; document.getElementById('rz-cin').value=''; document.getElementById('rz-cout').value=''; document.getElementById('rz-warn').style.display='none'; fillRezRoomSel(); document.getElementById('modal-rez').classList.add('open'); setTimeout(()=>document.getElementById('rz-name').focus(),300); }
+function rezCard({r,s,x}){
+  const nights=rezNights(r); const ri=getRoomInfo(r.room); const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id);
+  const kalan=Math.max(0,(x.total||0)-(r.deposit||0));
+  let cls=`rez-card ${s.card}`; if(cf&&s.key!=='cancel') cls+=' rc-conflict';
+  const money = x.total||r.deposit ? `<div class="rz-money"><span>Toplam <strong>${fmtTL(x.total)}</strong></span>${nights>0&&x.total?`<span>Gecelik <strong>${fmtTL(Math.round(x.total/nights))}</strong></span>`:''}<span>Ön ödeme <strong style="color:var(--accent)">${fmtTL(r.deposit)}</strong>${r.deposit&&x.dep_method?` <small>(${x.dep_method})</small>`:''}</span><span>Kalan <strong style="color:${kalan>0?'var(--red)':'var(--green)'}">${fmtTL(kalan)}</strong></span></div>` : `<div class="rz-money" style="color:var(--text3)">Ücret bilgisi girilmedi</div>`;
+  return `<div class="${cls}">
+    <div class="gtop"><div class="avatar">${ini(r.name)}</div><div class="ginfo">
+      <div class="gname">${r.name}${x.durum!=='onayli'?` <span class="rz-durum rz-${x.durum}">${DURUM_LBL[x.durum]||x.durum}</span>`:''}</div>
+      <div class="gmeta">Oda <strong>${r.room}</strong> · ${ri.type} · ${r.cin} → ${r.cout} · <strong>${nights} gece</strong> · ${r.persons||1} kişi</div>
+      <div class="gmeta">${KAYNAK_ICON[x.kaynak]||'🚪'} ${x.kaynak}${x.acenta?' — '+x.acenta:''}${r.phone?` · 📞 <a href="tel:${r.phone}" style="color:inherit">${r.phone}</a>`:''}${x.email?` · ✉️ ${x.email}`:''}</div>
+    </div><div class="gright"><span class="rdays ${s.cls}">${s.lbl}</span></div></div>
+    ${money}
+    ${x.note?`<div class="rz-note">📝 ${x.note}</div>`:''}
+    ${cf&&s.key!=='cancel'?`<div style="margin-top:8px;padding:8px;background:#fff3d6;border-radius:6px;font-size:12px;color:#7a4500">⚠️ ${cf}</div>`:''}
+    <div class="card-actions">
+      <button class="abtn a-edit" onclick="editRez(${r.id})">✏️ Düzenle</button>
+      ${r.phone?`<button class="abtn" style="background:#25d366;color:#fff;border:none" onclick="sendWhatsApp(${r.id})">📱 WhatsApp</button>`:''}
+      ${s.key!=='cancel'&&s.d<=1?`<button class="abtn a-in" onclick="rezToCI(${r.id})">✓ Check-in'e Al</button>`:''}
+      ${s.key==='cancel'?`<button class="abtn" style="background:var(--green-bg);color:var(--green)" onclick="setRezDurum(${r.id},'onayli')">↩ Geri Al</button>`:`<button class="abtn" style="flex:0;padding:7px 10px;background:var(--surface2)" title="İptal et (kayıt silinmez)" onclick="setRezDurum(${r.id},'iptal')">İptal</button>`}
+      <button class="abtn a-del" style="flex:0;padding:7px 10px" onclick="delRez(${r.id})">✕</button>
+    </div></div>`;
+}
+function rezGroupCard(g){
+  const f=g[0]; const s=f.s; const nights=rezNights(f.r);
+  const total=g.reduce((a,o)=>a+(o.x.total||0),0), dep=g.reduce((a,o)=>a+(o.r.deposit||0),0), pers=g.reduce((a,o)=>a+(o.r.persons||1),0);
+  const rooms=g.slice().sort((a,b)=>parseInt(a.r.room)-parseInt(b.r.room));
+  const anyCf=rooms.some(o=>isRoomConflict(o.r.room,toISO(o.r.cin),toISO(o.r.cout),o.r.id));
+  return `<div class="rez-card ${s.card}${anyCf?' rc-conflict':''}">
+    <div class="gtop"><div class="avatar">👥</div><div class="ginfo">
+      <div class="gname">${f.r.name} <span class="rz-durum" style="background:var(--accent-dim);color:var(--accent)">${g.length} oda</span></div>
+      <div class="gmeta">${f.r.cin} → ${f.r.cout} · <strong>${nights} gece</strong> · ${pers} kişi · ${KAYNAK_ICON[f.x.kaynak]||'🚪'} ${f.x.kaynak}${f.x.acenta?' — '+f.x.acenta:''}${f.r.phone?` · 📞 ${f.r.phone}`:''}</div>
+    </div><div class="gright"><span class="rdays ${s.cls}">${s.lbl}</span></div></div>
+    <div class="rz-money"><span>Grup toplamı <strong>${fmtTL(total)}</strong></span><span>Ön ödeme <strong style="color:var(--accent)">${fmtTL(dep)}</strong></span><span>Kalan <strong style="color:${total-dep>0?'var(--red)':'var(--green)'}">${fmtTL(Math.max(0,total-dep))}</strong></span></div>
+    <div class="rz-rooms">${rooms.map(o=>{ const cf=isRoomConflict(o.r.room,toISO(o.r.cin),toISO(o.r.cout),o.r.id); return `<div class="rz-room-row${cf?' rz-cf':''}"><span><strong>Oda ${o.r.room}</strong> <small>${getRoomInfo(o.r.room).type}</small>${cf?` <small style="color:#c0242a">⚠️ ${cf}</small>`:''}${o.x.note?` <small>· ${o.x.note}</small>`:''}</span><span style="white-space:nowrap">${o.x.total?fmtTL(o.x.total):'—'} <button class="abtn a-edit" style="flex:0;padding:4px 8px;margin-left:4px" onclick="editRez(${o.r.id})">✏️</button>${s.key!=='cancel'&&s.d<=1?`<button class="abtn a-in" style="flex:0;padding:4px 8px" onclick="rezToCI(${o.r.id})">✓</button>`:''}</span></div>`; }).join('')}</div>
+    <div class="card-actions">${f.r.phone?`<button class="abtn" style="background:#25d366;color:#fff;border:none" onclick="sendWhatsApp(${f.r.id})">📱 WhatsApp</button>`:''}${s.key!=='cancel'&&s.d<=1?`<button class="abtn a-in" onclick="rezGroupToCI([${g.map(o=>o.r.id).join(',')}])">✓ Tümünü Check-in'e Al (${g.length})</button>`:''}</div></div>`;
+}
 
-function editRez(id){ editRezId=id; const r=rez.find(x=>x.id===id); if(!r) return; document.getElementById('rez-title').textContent=r.name+' — Düzenle'; document.getElementById('rez-btn').textContent='Güncelle'; const p=r.name.split(' '); document.getElementById('rz-name').value=p[0]||''; document.getElementById('rz-surn').value=p.slice(1).join(' ')||''; document.getElementById('rz-phone').value=r.phone||''; document.getElementById('rz-persons').value=r.persons||''; document.getElementById('rz-deposit').value=r.deposit||''; document.getElementById('rz-note').value=r.note||''; document.getElementById('rz-cin').value=toISO(r.cin); document.getElementById('rz-cout').value=toISO(r.cout); document.getElementById('rz-warn').style.display='none'; fillRezRoomSel(); document.getElementById('rz-room').value=r.room; document.getElementById('modal-rez').classList.add('open'); }
+function fillRezRoomSel(){ const sel=document.getElementById('rz-room'); sel.innerHTML='<option value="">Oda seç...</option>'; [1,2,3].forEach(f=>{ const og=document.createElement('optgroup'); og.label=f+'. Kat'; FLOORS[f].forEach(r=>{ const o=document.createElement('option'); o.value=r; o.textContent=`${r} · ${getRoomInfo(r).type}`; og.appendChild(o); }); sel.appendChild(og); }); }
+function onRezKaynakChange(){ const v=document.getElementById('rz-kaynak').value; document.getElementById('rz-acenta-wrap').style.display=(v==='Acenta'||v==='Kurumsal'||v==='Grup')?'':'none'; }
+function rezFormNights(){ const a=document.getElementById('rz-cin').value, b=document.getElementById('rz-cout').value; if(!a||!b) return 0; return Math.max(0,Math.round((new Date(b)-new Date(a))/86400000)); }
+function updateRezCalc(){ const n=rezFormNights(); const total=parseInt(document.getElementById('rz-total').value)||0; const dep=parseInt(document.getElementById('rz-deposit').value)||0; const nightly=document.getElementById('rz-nightly'); if(n>0&&total>0) nightly.value=Math.round(total/n); const c=document.getElementById('rz-calc'); const room=document.getElementById('rz-room').value; const ri=room?getRoomInfo(room):null; const info=document.getElementById('rz-roominfo'); if(ri){ info.style.display='block'; info.innerHTML=`🛏 Oda ${room}: <strong>${ri.type}</strong> · ${ri.sqm} m² · ${ri.view} manzara${ri.bal?' · Balkonlu':''}${fiyatlar[room]?.gunluk?` · Liste fiyatı ${fmtTL(fiyatlar[room].gunluk)}/gece`:''}`; } else info.style.display='none'; if(n>0||total>0||dep>0){ c.style.display='block'; c.innerHTML=`${n>0?`<strong>${n} gece</strong>`:'Tarih eksik'}${total>0?` · Toplam <strong>${fmtTL(total)}</strong>${n>0?` (gecelik ${fmtTL(Math.round(total/n))})`:''}`:''}${dep>0?` · Ön ödeme <strong>${fmtTL(dep)}</strong>`:''}${total>0?` · <strong style="color:${total-dep>0?'var(--red)':'var(--green)'}">Kalan ${fmtTL(Math.max(0,total-dep))}</strong>`:''}`; } else c.style.display='none'; }
+function updateRezCalcFromNightly(){ const n=rezFormNights(); const nt=parseInt(document.getElementById('rz-nightly').value)||0; if(n>0&&nt>0) document.getElementById('rz-total').value=nt*n; updateRezCalc(); }
+
+function openRezModal(){ editRezId=null; document.getElementById('rez-title').textContent='Yeni Rezervasyon'; document.getElementById('rez-btn').textContent='Kaydet'; ['rz-name','rz-surn','rz-phone','rz-email','rz-deposit','rz-note','rz-total','rz-nightly','rz-acenta','rz-persons','rz-cin','rz-cout'].forEach(id=>document.getElementById(id).value=''); document.getElementById('rz-kaynak').value='Kapı Müşterisi'; document.getElementById('rz-durum').value='onayli'; document.getElementById('rz-depm').value=''; onRezKaynakChange(); document.getElementById('rz-warn').style.display='none'; fillRezRoomSel(); updateRezCalc(); document.getElementById('modal-rez').classList.add('open'); setTimeout(()=>document.getElementById('rz-name').focus(),300); }
+
+function editRez(id){ editRezId=id; const r=rez.find(x=>x.id===id); if(!r) return; const x=rezData(r); document.getElementById('rez-title').textContent=r.name+' — Düzenle'; document.getElementById('rez-btn').textContent='Güncelle'; const p=r.name.split(' '); document.getElementById('rz-name').value=p[0]||''; document.getElementById('rz-surn').value=p.slice(1).join(' ')||''; document.getElementById('rz-phone').value=r.phone||''; document.getElementById('rz-email').value=x.email||''; document.getElementById('rz-persons').value=r.persons||''; document.getElementById('rz-deposit').value=r.deposit||''; document.getElementById('rz-depm').value=x.dep_method||''; document.getElementById('rz-total').value=x.total||''; document.getElementById('rz-nightly').value=''; document.getElementById('rz-note').value=x.note||''; document.getElementById('rz-kaynak').value=x.kaynak||'Kapı Müşterisi'; if(!document.getElementById('rz-kaynak').value) document.getElementById('rz-kaynak').value='Kapı Müşterisi'; document.getElementById('rz-acenta').value=x.acenta||''; document.getElementById('rz-durum').value=x.durum||'onayli'; onRezKaynakChange(); document.getElementById('rz-cin').value=toISO(r.cin); document.getElementById('rz-cout').value=toISO(r.cout); document.getElementById('rz-warn').style.display='none'; fillRezRoomSel(); document.getElementById('rz-room').value=r.room; updateRezCalc(); checkRezConflict(); document.getElementById('modal-rez').classList.add('open'); }
 
 function closeRezModal(){ document.getElementById('modal-rez').classList.remove('open'); editRezId=null; }
 document.getElementById('modal-rez').addEventListener('click',e=>{ if(e.target.id==='modal-rez') closeRezModal(); });
 function checkRezConflict(){ const room=document.getElementById('rz-room').value; const cin=document.getElementById('rz-cin').value; const cout=document.getElementById('rz-cout').value; if(!room||!cin||!cout){ document.getElementById('rz-warn').style.display='none'; return; } const cf=isRoomConflict(room,cin,cout,editRezId); const w=document.getElementById('rz-warn'); if(cf){ w.style.display='flex'; document.getElementById('rz-warn-txt').textContent=cf; } else w.style.display='none'; }
-document.getElementById('rz-room').addEventListener('change',checkRezConflict);
+document.getElementById('rz-room').addEventListener('change',()=>{ checkRezConflict(); updateRezCalc(); });
 
-async function saveRez(){ const name=document.getElementById('rz-name').value.trim(); const surn=document.getElementById('rz-surn').value.trim(); const room=document.getElementById('rz-room').value; const cin=document.getElementById('rz-cin').value; const cout=document.getElementById('rz-cout').value; if(!name||!room||!cin){ alert('Ad, oda ve giriş tarihi zorunludur.'); return; } const data={name:`${name} ${surn}`.trim(),room,cin:toTR(cin),cout:cout?toTR(cout):'—',phone:document.getElementById('rz-phone').value.trim(),persons:parseInt(document.getElementById('rz-persons').value)||1,deposit:parseInt(document.getElementById('rz-deposit').value)||0,note:document.getElementById('rz-note').value.trim()}; document.getElementById('rez-btn').textContent='⏳'; if(editRezId!==null){ await sbUpdate('rezervasyonlar',editRezId,data); await addLog('guncelleme',room,data.name,`Rezervasyon güncellendi — ${toTR(cin)}${cout?' → '+toTR(cout):''}`); toast('✓ Güncellendi'); } else { await sbInsert('rezervasyonlar',data); await addLog('rezervasyon',room,data.name,`Rezervasyon eklendi — ${toTR(cin)}${cout?' → '+toTR(cout):''}`); toast('✓ Rezervasyon eklendi'); } rez=await sbSelect('rezervasyonlar','order=id.asc'); closeRezModal(); renderRez(); }
+async function saveRez(){
+  const name=document.getElementById('rz-name').value.trim(); const surn=document.getElementById('rz-surn').value.trim(); const room=document.getElementById('rz-room').value; const cin=document.getElementById('rz-cin').value; const cout=document.getElementById('rz-cout').value;
+  if(!name||!room||!cin){ alert('Ad, oda ve giriş tarihi zorunludur.'); return; }
+  if(cout&&cout<=cin){ alert('Çıkış tarihi giriş tarihinden sonra olmalı.'); return; }
+  const ext={ total:parseInt(document.getElementById('rz-total').value)||0, kaynak:document.getElementById('rz-kaynak').value, acenta:document.getElementById('rz-acenta').value.trim(), dep_method:document.getElementById('rz-depm').value, email:document.getElementById('rz-email').value.trim(), durum:document.getElementById('rz-durum').value };
+  const note=document.getElementById('rz-note').value.trim();
+  const data={name:`${name} ${surn}`.trim(),room,cin:toTR(cin),cout:cout?toTR(cout):'—',phone:document.getElementById('rz-phone').value.trim(),persons:parseInt(document.getElementById('rz-persons').value)||1,deposit:parseInt(document.getElementById('rz-deposit').value)||0};
+  if(REZ_EXT===null) await probeRezExt(false);
+  if(REZ_EXT){ Object.assign(data,ext,{note}); } else { data.note=rezPackNote(note,{...ext,kaynak:ext.kaynak==='Kapı Müşterisi'?'':ext.kaynak,durum:ext.durum==='onayli'?'':ext.durum}); }
+  const cf=isRoomConflict(room,cin,cout||cin,editRezId);
+  if(cf&&ext.durum!=='iptal'&&!confirm(`⚠️ ${cf}\n\nYine de kaydedilsin mi?`)) return;
+  document.getElementById('rez-btn').textContent='⏳';
+  const det=`${toTR(cin)}${cout?' → '+toTR(cout):''}${ext.total?' · '+fmtTL(ext.total):''}${ext.kaynak&&ext.kaynak!=='Kapı Müşterisi'?' · '+ext.kaynak:''}`;
+  try{
+    let ok;
+    if(editRezId!==null){ ok=await sbUpdate('rezervasyonlar',editRezId,data); if(!ok) throw new Error('Sunucu güncellemeyi reddetti'); await addLog('guncelleme',room,data.name,`Rezervasyon güncellendi — ${det}`); toast('✓ Güncellendi'); }
+    else { ok=await sbInsert('rezervasyonlar',data); if(!ok) throw new Error('Sunucu kaydı reddetti'); await addLog('rezervasyon',room,data.name,`Rezervasyon eklendi — ${det}`); toast('✓ Rezervasyon eklendi'); }
+  }catch(e){ alert('Kaydedilemedi: '+(e.message||e)); document.getElementById('rez-btn').textContent=editRezId!==null?'Güncelle':'Kaydet'; return; }
+  rez=await sbSelect('rezervasyonlar','order=id.asc'); closeRezModal(); renderRez();
+}
 
-async function delRez(id){ if(!confirm('Rezervasyonu silmek istiyor musunuz?')) return; await sbDelete('rezervasyonlar',id); rez=rez.filter(r=>r.id!==id); renderRez(); toast('Rezervasyon silindi'); }
+async function setRezDurum(id,durum){ const r=rez.find(x=>x.id===id); if(!r) return; if(durum==='iptal'&&!confirm(`${r.name} — Oda ${r.room} rezervasyonu iptal edilsin mi?\n(Kayıt silinmez, "İptal edilenler" filtresinden geri alınabilir.)`)) return; const x=rezData(r); if(REZ_EXT===null) await probeRezExt(false); const data=REZ_EXT?{durum}:{note:rezPackNote(x.note,{total:x.total,kaynak:x.kaynak==='Kapı Müşterisi'?'':x.kaynak,acenta:x.acenta,dep_method:x.dep_method,email:x.email,durum:durum==='onayli'?'':durum})}; const ok=await sbUpdate('rezervasyonlar',id,data); if(!ok){ alert('Güncellenemedi.'); return; } await addLog(durum==='iptal'?'silme':'guncelleme',r.room,r.name,durum==='iptal'?'Rezervasyon iptal edildi':'Rezervasyon iptali geri alındı'); rez=await sbSelect('rezervasyonlar','order=id.asc'); renderRez(); toast(durum==='iptal'?'Rezervasyon iptal edildi':'✓ Rezervasyon geri alındı'); }
 
-async function rezToCI(id){ const r=rez.find(x=>x.id===id); if(!r) return; await sbInsert('guests',{name:r.name,room:r.room,checkin:r.cin,checkout:r.cout,status:'Konaklamada',amt:r.deposit||0,pay:'beklemede'}); await sbDelete('rezervasyonlar',id); rez=rez.filter(x=>x.id!==id); guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); renderRez(); toast('✓ Check-in\'e alındı'); }
+async function delRez(id){ const r=rez.find(x=>x.id===id); if(!confirm(`${r?r.name+' — Oda '+r.room+' ':''}rezervasyonu KALICI olarak silinsin mi?\n\nİpucu: Silmek yerine "İptal" ile işaretlerseniz kayıt korunur.`)) return; await sbDelete('rezervasyonlar',id); if(r) await addLog('silme',r.room,r.name,`Rezervasyon silindi — ${r.cin} → ${r.cout}`); rez=rez.filter(x=>x.id!==id); renderRez(); toast('Rezervasyon silindi'); }
+
+// Rezervasyonu check-in'e çevir: toplam tutar, ön ödeme ve kaynak bilgisi taşınır, hiçbir bilgi kaybolmaz
+function rezToGuest(r){ const x=rezData(r); const total=x.total||0, dep=r.deposit||0; const payments=[]; if(dep>0) payments.push({amt:dep,method:x.dep_method||'nakit'}); if(total>dep) payments.push({amt:total-dep,method:'beklemede'}); const mainPay=payments.length?payments.reduce((a,b)=>a.amt>=b.amt?a:b).method:'beklemede'; const kaynak=(x.kaynak==='Acenta'||x.kaynak==='Kurumsal'||x.kaynak==='Grup')?'Acenta':'Kapı Müşterisi'; const acenta=x.acenta||((x.kaynak&&x.kaynak!=='Kapı Müşterisi'&&x.kaynak!=='Telefon'&&x.kaynak!=='WhatsApp')?x.kaynak:''); return {name:r.name,room:r.room,checkin:r.cin,checkout:r.cout,status:'Konaklamada',amt:total||dep,pay:mainPay,payments,kaynak,acenta,comp:false,idno:'',bday:''}; }
+async function rezToCI(id){ const r=rez.find(x=>x.id===id); if(!r) return; const x=rezData(r); const cf=isRoomConflict(r.room,toISO(r.cin),toISO(r.cout),r.id); if(!confirm(`${r.name} — Oda ${r.room}\n${r.cin} → ${r.cout}${x.total?`\nToplam ${fmtTL(x.total)} · Ön ödeme ${fmtTL(r.deposit)}`:''}${cf?`\n\n⚠️ ${cf}`:''}\n\nCheck-in'e alınsın mı?`)) return; const g=rezToGuest(r); const ins=await sbInsert('guests',g); if(!ins){ alert('Check-in kaydı oluşturulamadı, rezervasyon korundu.'); return; } await addLog('check-in',r.room,r.name,`Rezervasyondan check-in — ${r.cin} → ${r.cout}${x.total?' · '+fmtTL(x.total):''}`); await sbDelete('rezervasyonlar',id); rez=rez.filter(x=>x.id!==id); guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); renderRez(); toast('✓ Check-in\'e alındı'); }
+async function rezGroupToCI(ids){ const list=ids.map(id=>rez.find(x=>x.id===id)).filter(Boolean); if(!list.length) return; if(!confirm(`${list[0].name} — ${list.length} oda (${list.map(r=>r.room).join(', ')})\n\nTümü check-in'e alınsın mı?`)) return; let n=0; for(const r of list){ const g=rezToGuest(r); const ins=await sbInsert('guests',g); if(!ins){ toast(`Oda ${r.room} check-in yapılamadı, rezervasyon korundu`); continue; } n++; await addLog('check-in',r.room,r.name,`Rezervasyondan check-in (grup) — ${r.cin} → ${r.cout}`); await sbDelete('rezervasyonlar',r.id); } rez=await sbSelect('rezervasyonlar','order=id.asc'); guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); renderRez(); toast(`✓ ${n} oda check-in'e alındı`); }
 
 // ═══════════════════════════════════════
 // LONG STAY
@@ -2557,7 +2776,8 @@ async function sendWhatsApp(rezId){
   const nights = r.cout&&r.cout!=='—' ? Math.max(0,Math.round((dateObj(r.cout)-dateObj(r.cin))/86400000)) : '?';
   const ri = getRoomInfo(r.room);
   const f  = fiyatlar[r.room]||{};
-  const toplamFiyat = f.gunluk && typeof nights==='number' ? (f.gunluk * nights).toLocaleString('tr-TR')+'₺' : null;
+  const rx = rezData(r);
+  const toplamFiyat = rx.total ? rx.total.toLocaleString('tr-TR')+'₺' : (f.gunluk && typeof nights==='number' ? (f.gunluk * nights).toLocaleString('tr-TR')+'₺' : null);
   const ay = otelAyarlar;
 
   const mesaj = `Sayın ${r.name},
@@ -2573,7 +2793,7 @@ Giriş Tarihi: ${r.cin}
 Konaklama Süresi: ${nights} gece
 Kişi Sayısı: ${r.persons||1} kişi
 ${r.deposit?`Alınan Ön Ödeme: ${r.deposit.toLocaleString('tr-TR')}₺`:''}${toplamFiyat?`\nToplam Tutar: ${toplamFiyat}`:''}
-${r.note?`Özel İsteğiniz: ${r.note}`:''}
+${rx.note?`Özel İsteğiniz: ${rx.note}`:''}${rx.total&&r.deposit?`\nKalan Ödeme: ${Math.max(0,rx.total-r.deposit).toLocaleString('tr-TR')}₺`:''}
 
 ━━━━━━━━━━━━━━━
 📍 OTEL BİLGİLERİ
@@ -2854,6 +3074,7 @@ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
   updateStats();
   filterGuests('');
   renderRez();
+  probeRezExt(false);
   loadHava(); // Hava durumunu yükle
   // Bildirim izni iste ve kontrol et
   await requestNotifPermission();
