@@ -2088,16 +2088,27 @@ async function exportRaporCSV(){
   aoa.push(['','comp olan oda varsa açıklama',compList.length?compList.map(g=>`${g.room} ${g.name}`).join(', '):'—','','','','','','','','','','']);
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols'] = [{wch:7},{wch:20},{wch:16},{wch:10},{wch:6},{wch:6},{wch:7},{wch:18},{wch:12},{wch:14},{wch:12},{wch:12},{wch:16}];
+  // Dar kolonlar + tek satır yüksekliği: her oda ekrana/sayfaya tek satırda sığsın, metin sarmasın
+  ws['!cols'] = [{wch:6},{wch:14},{wch:12},{wch:9},{wch:5},{wch:6},{wch:6},{wch:14},{wch:9},{wch:11},{wch:10},{wch:10},{wch:13}];
   ws['!merges'] = [
     {s:{r:titleRowIdx,c:0},e:{r:titleRowIdx,c:12}},
     {s:{r:dateRowIdx,c:0},e:{r:dateRowIdx,c:12}}
   ];
+  // Tüm satırlar tek satır (16pt) yüksekliğinde — kayan/sarılan metin yok
+  ws['!rows'] = aoa.map(()=>({hpt:16}));
+  // Sayfa tek sayfa genişliğine sığacak şekilde ayarlı (yazdırma/PDF görünümü)
+  ws['!pageSetup'] = {orientation:'landscape', fitToWidth:1, fitToHeight:0, scale:100};
+  ws['!fitToWidth'] = 1;
+  ws['!fitToHeight'] = 0;
 
-  ws[XLSX.utils.encode_cell({r:titleRowIdx,c:0})].s = {font:{bold:true,sz:14,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center'}};
-  ws[XLSX.utils.encode_cell({r:dateRowIdx,c:0})].s = {font:{bold:true,sz:11},fill:{fgColor:{rgb:'FFF2CC'}},alignment:{horizontal:'center'}};
+  const FONT_NAME = 'Calibri';
+  const F = (extra={}) => ({name:FONT_NAME, sz:10, ...extra});
+  const noWrap = {wrapText:false, vertical:'center'};
 
-  const headerStyle = {font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center'}};
+  ws[XLSX.utils.encode_cell({r:titleRowIdx,c:0})].s = {font:F({bold:true,sz:14,color:{rgb:'FFFFFF'}}),fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center',...noWrap}};
+  ws[XLSX.utils.encode_cell({r:dateRowIdx,c:0})].s = {font:F({bold:true,sz:11}),fill:{fgColor:{rgb:'FFF2CC'}},alignment:{horizontal:'center',...noWrap}};
+
+  const headerStyle = {font:F({bold:true,sz:9,color:{rgb:'FFFFFF'}}),fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center',...noWrap}};
   header.forEach((_,ci)=>{
     const addr = XLSX.utils.encode_cell({r:headerRowIdx,c:ci});
     if(ws[addr]) ws[addr].s = headerStyle;
@@ -2108,15 +2119,15 @@ async function exportRaporCSV(){
     const fill = g ? RAPOR_RENKLER[raporRenkKategori(g)].fill : 'F5F5F5';
     for(let ci=0;ci<header.length;ci++){
       const addr = XLSX.utils.encode_cell({r:dataStartIdx+ri,c:ci});
-      if(ws[addr]) ws[addr].s = {fill:{fgColor:{rgb:fill}}, border:{bottom:{style:'thin',color:{rgb:'DDDDDD'}}}};
+      if(ws[addr]) ws[addr].s = {font:F(), fill:{fgColor:{rgb:fill}}, border:{bottom:{style:'thin',color:{rgb:'DDDDDD'}}}, alignment:noWrap};
     }
   });
 
   for(let ci=0;ci<header.length;ci++){
     const addr = XLSX.utils.encode_cell({r:footerRowIdx,c:ci});
-    if(ws[addr]) ws[addr].s = {font:{bold:true},fill:{fgColor:{rgb:'D9E1F2'}}};
+    if(ws[addr]) ws[addr].s = {font:F({bold:true}),fill:{fgColor:{rgb:'D9E1F2'}},alignment:noWrap};
     const addr2 = XLSX.utils.encode_cell({r:footerRowIdx+1,c:ci});
-    if(ws[addr2]) ws[addr2].s = {font:{bold:true},fill:{fgColor:{rgb:'FCE4D6'}}};
+    if(ws[addr2]) ws[addr2].s = {font:F({bold:true}),fill:{fgColor:{rgb:'FCE4D6'}},alignment:noWrap};
   }
 
   // ═══ Sayfa 2: Karşılaştırma ═══
@@ -2147,16 +2158,24 @@ async function exportRaporCSV(){
     {s:{r:0,c:0},e:{r:0,c:3}},
     {s:{r:8,c:0},e:{r:8,c:3}}
   ];
+  kws['!rows'] = kaoa.map(()=>({hpt:16}));
   [0,8].forEach(r=>{
     const addr=XLSX.utils.encode_cell({r,c:0});
-    if(kws[addr]) kws[addr].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:12},fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center'}};
+    if(kws[addr]) kws[addr].s={font:F({bold:true,color:{rgb:'FFFFFF'},sz:12}),fill:{fgColor:{rgb:'1F3864'}},alignment:{horizontal:'center',...noWrap}};
   });
   [1,9].forEach(r=>{
     for(let ci=0;ci<4;ci++){
       const addr=XLSX.utils.encode_cell({r,c:ci});
-      if(kws[addr]) kws[addr].s={font:{bold:true},fill:{fgColor:{rgb:'D9E1F2'}}};
+      if(kws[addr]) kws[addr].s={font:F({bold:true}),fill:{fgColor:{rgb:'D9E1F2'}},alignment:noWrap};
     }
   });
+  for(let ri=2;ri<kaoa.length;ri++){
+    if(ri===7||ri===8) continue;
+    for(let ci=0;ci<4;ci++){
+      const addr=XLSX.utils.encode_cell({r:ri,c:ci});
+      if(kws[addr] && !kws[addr].s) kws[addr].s={font:F(),alignment:noWrap};
+    }
+  }
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Gunluk Rapor');
