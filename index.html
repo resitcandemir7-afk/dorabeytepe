@@ -90,6 +90,16 @@ html,body{height:100%;background:var(--bg);font-family:'DM Sans',sans-serif;colo
 .r-occ{background:#ffd0d0;color:#9e0f0f;border-color:#e83333;box-shadow:0 1px 4px rgba(232,51,51,.2);}
 .r-co{background:#ffe9b0;color:#8a5000;border-color:#e8a020;}
 .r-clean{background:#1a1a1a;color:#fff;border-color:#000;}
+.rcell{position:relative;}
+.r-tmr{box-shadow:0 0 0 2px #1e6fd9 inset,0 0 0 2px #fff;border-color:#1e6fd9!important;}
+.r-tmr::after,.r-today::after{content:'';position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:#1e6fd9;border:1.5px solid #fff;box-shadow:0 0 0 1px #1e6fd9;}
+.r-today::after{background:#e83333;box-shadow:0 0 0 1px #e83333;}
+.r-today{box-shadow:0 0 0 2px #e83333 inset,0 0 0 2px #fff;border-color:#e83333!important;}
+.rooms-warn{margin:6px 0 4px;padding:10px 12px;border-radius:var(--rs);border:1px solid var(--blue-bd);background:var(--blue-bg);font-size:11px;color:#0d3d75;line-height:1.5;}
+.rooms-warn b{font-weight:800;}
+.rooms-warn .rw-chip{display:inline-block;margin:3px 4px 0 0;padding:2px 7px;border-radius:999px;background:#fff;border:1px solid var(--blue-bd);font-family:'DM Mono',monospace;font-weight:700;font-size:10px;cursor:pointer;}
+.rooms-warn.rw-red{border-color:#f0b0b0;background:#fff0f0;color:#8a1010;}
+.rooms-warn.rw-red .rw-chip{border-color:#f0b0b0;}
 .legend{display:flex;flex-wrap:wrap;gap:10px;padding:9px 14px 4px;}
 .leg{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--text2);}
 .ldot{width:12px;height:12px;border-radius:3px;border:1.5px solid;}
@@ -374,6 +384,8 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
         <div class="leg"><div class="ldot" style="background:#ffd0d0;border-color:#e83333"></div>Dolu</div>
         <div class="leg"><div class="ldot" style="background:#ffe9b0;border-color:#e8a020"></div>Çıkış bugün</div>
         <div class="leg"><div class="ldot" style="background:#1a1a1a;border-color:#000"></div>Temizlik</div>
+        <div class="leg"><div class="ldot" style="background:#fff;border-color:#e83333;box-shadow:0 0 0 1.5px #e83333 inset"></div>Bugün giriş</div>
+        <div class="leg"><div class="ldot" style="background:#fff;border-color:#1e6fd9;box-shadow:0 0 0 1.5px #1e6fd9 inset"></div>Yarın giriş</div>
       </div>
       <div class="floors" id="floors"></div>
     </div>
@@ -851,6 +863,7 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
       <div id="rm-guest-meta" style="font-size:12px;color:var(--text2);margin-top:2px"></div>
       <button class="abtn a-edit" style="margin-top:8px;flex:0;padding:5px 12px;font-size:12px;display:inline-block" id="rm-edit-btn">✏️ Misafiri Düzenle</button>
     </div>
+    <div id="rm-rez-info" style="display:none;margin-bottom:12px;padding:10px 12px;background:#fff8e6;border:1px solid #e8a020;border-radius:var(--rs)"></div>
     <div class="fgrp">
       <label class="flbl">Oda Tipi</label>
       <div class="rm-chips" id="rm-types">
@@ -994,7 +1007,7 @@ async function switchTab(tab, el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); el.classList.add('active');
   document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active')); document.getElementById('pane-'+tab).classList.add('active');
   if(tab==='guests'){ guests=await sbSelect('guests','order=id.desc'); updateStats(); filterGuests(''); }
-  if(tab==='rooms'){ guests=await sbSelect('guests','order=id.desc'); await loadTmz(); await loadRooms(); renderRooms(); }
+  if(tab==='rooms'){ guests=await sbSelect('guests','order=id.desc'); rez=await sbSelect('rezervasyonlar','order=id.asc'); await loadTmz(); await loadRooms(); renderRooms(); }
   if(tab==='pay'){ guests=await sbSelect('guests','order=id.desc'); renderPay(); }
   if(tab==='gelirler'){ guests=await sbSelect('guests','order=id.desc'); rez=await sbSelect('rezervasyonlar','order=id.asc'); renderGelirler(); }
   if(tab==='rez'){ rez=await sbSelect('rezervasyonlar','order=id.asc'); renderRez(); if(REZ_EXT===null) probeRezExt(false); }
@@ -1243,15 +1256,37 @@ async function quickCO(id){
 // ═══════════════════════════════════════
 // ROOMS
 // ═══════════════════════════════════════
+// Yarın / bugün girişi olan rezervasyonlar (iptal hariç) — oda haritasında uyarı için
+function arrivalsByRoom(){
+  const tmr=new Map(), tod=new Map();
+  (rez||[]).forEach(r=>{
+    const st=rezState(r); if(st.key==='cancel') return;
+    if(st.key==='tomorrow'){ if(!tmr.has(r.room)) tmr.set(r.room,[]); tmr.get(r.room).push(r); }
+    if(st.key==='today'){ if(!tod.has(r.room)) tod.set(r.room,[]); tod.get(r.room).push(r); }
+  });
+  return {tmr,tod};
+}
+function arrivalsBanner(map,occ,cls,title){
+  if(!map.size) return '';
+  const rooms=[...map.keys()].sort();
+  const chips=rooms.map(r=>{ const names=map.get(r).map(x=>x.name).join(', '); const busy=occ.has(r)?' · şu an dolu':''; return `<span class="rw-chip" onclick="openRoomModal('${r}')" title="${names}${busy}">${r}${busy?' ⚠️':''}</span>`; }).join('');
+  const busyCnt=rooms.filter(r=>occ.has(r)).length;
+  return `<div class="rooms-warn ${cls}"><b>${title} · ${rooms.length} oda</b>${busyCnt?` — <b>${busyCnt} odada hâlâ misafir var</b>, çıkış/temizlik planlanmalı`:''}<br>${chips}</div>`;
+}
 function renderRooms(){
   const occ  = new Set(guests.filter(g=>g.status==='Konaklamada').map(g=>g.room));
   const td   = new Date().toLocaleDateString('tr-TR');
   const coday= new Set(guests.filter(g=>g.checkout===td&&g.status==='Konaklamada').map(g=>g.room));
+  const {tmr,tod}=arrivalsByRoom();
   document.getElementById('floors').innerHTML=
-    `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 0 4px">
+    `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 0 4px">
       <div class="psum"><div class="psum-val" style="color:var(--red)">${occ.size}</div><div class="psum-lbl">🔴 Dolu</div></div>
       <div class="psum"><div class="psum-val" style="color:var(--green)">${ALL_ROOMS.filter(r=>!occ.has(r)).length}</div><div class="psum-lbl">🟢 Boş</div></div>
+      <div class="psum"><div class="psum-val" style="color:var(--red)">${tod.size}</div><div class="psum-lbl">📍 Bugün Giriş</div></div>
+      <div class="psum"><div class="psum-val" style="color:var(--blue)">${tmr.size}</div><div class="psum-lbl">➡️ Yarın Giriş</div></div>
     </div>`
+    +arrivalsBanner(tod,occ,'rw-red','📍 Bugün giriş')
+    +arrivalsBanner(tmr,occ,'','➡️ Yarın giriş')
     +[1,2,3].map(f=>`
     <div class="floor-wrap f${f}">
       <div class="floor-lbl">${f}. Kat <span>— ${FLOORS[f].length} oda</span></div>
@@ -1261,7 +1296,10 @@ function renderRooms(){
           if(occ.has(r)) c='r-occ';
           else if(coday.has(r)) c='r-co';
           else if(tmzData.find(t=>t.room===r&&(t.status==='Bekliyor'||t.status==='Temizleniyor'||t.status==='Kontrol'))) c='r-clean';
-          return `<div class="rcell ${c}" onclick="openRoomModal('${r}')">${r}</div>`;
+          let tip='';
+          if(tod.has(r)){ c+=' r-today'; tip=' title="📍 Bugün giriş: '+tod.get(r).map(x=>x.name).join(', ')+'"'; }
+          else if(tmr.has(r)){ c+=' r-tmr'; tip=' title="➡️ Yarın giriş: '+tmr.get(r).map(x=>x.name).join(', ')+'"'; }
+          return `<div class="rcell ${c}"${tip} onclick="openRoomModal('${r}')">${r}</div>`;
         }).join('')}
       </div>
     </div>`).join('');
@@ -1315,6 +1353,14 @@ function openRoomModal(r){
   } else {
     gInfo.style.display='none';
   }
+
+  // Yaklaşan rezervasyon (bugün / yarın / 7 gün içinde)
+  const rInfo=document.getElementById('rm-rez-info');
+  const upcoming=(rez||[]).map(x=>({x,s:rezState(x)})).filter(o=>o.x.room===r&&['today','tomorrow','week'].includes(o.s.key)).sort((a,b)=>a.s.d-b.s.d);
+  if(upcoming.length){
+    rInfo.style.display='block';
+    rInfo.innerHTML=upcoming.map(o=>{ const rx=rezData(o.x); const warn=g&&o.s.d<=1?'<div style="margin-top:4px;font-size:11px;color:#9e0f0f;font-weight:700">⚠️ Odada hâlâ misafir var — çıkış ve temizlik planlanmalı</div>':''; return `<div style="font-size:12px;color:#8a5000;font-weight:700;margin-bottom:3px">${o.s.lbl} · Rezervasyon</div><div style="font-size:14px;font-weight:600;color:var(--text)">${o.x.name}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${o.x.cin} → ${o.x.cout} · ${rezNights(o.x)} gece · ${o.x.persons||1} kişi${rx.total?' · '+fmtTL(rx.total):''}</div>${rx.note?`<div style="font-size:11px;color:var(--text2);margin-top:2px">📝 ${rx.note}</div>`:''}${warn}`; }).join('<hr style="border:0;border-top:1px dashed #e8a020;margin:8px 0">');
+  } else { rInfo.style.display='none'; rInfo.innerHTML=''; }
 
   document.getElementById('modal-room').classList.add('open');
 }
