@@ -1507,8 +1507,8 @@ function sorgula(){
   if(!cinISO||!coutISO){ res.innerHTML=`<div style="color:var(--red);font-size:13px">⚠️ Lütfen giriş ve çıkış tarihini girin.</div>`; return; }
   if(cinISO>=coutISO){ res.innerHTML=`<div style="color:var(--red);font-size:13px">⚠️ Çıkış tarihi girişten sonra olmalı.</div>`; return; }
 
-  const cin  = new Date(cinISO);
-  const cout = new Date(coutISO);
+  const cin  = dateObj(cinISO);
+  const cout = dateObj(coutISO);
   const nights = Math.round((cout-cin)/86400000);
 
   // Dolu odaları bul (guests + rezervasyonlar)
@@ -1581,7 +1581,7 @@ function sqOdaSec(room, cinISO, coutISO){
 }
 
 function isRoomConflict(room,cinISO,coutISO,skipId){
-  const cin=new Date(cinISO); const cout=new Date(coutISO);
+  const cin=dateObj(cinISO); const cout=dateObj(coutISO); if(!cin||!cout) return null;
   const gc=guests.find(g=>g.room===room&&g.status!=='Check-out'&&(()=>{ const i=dateObj(g.checkin); const o=dateObj(g.checkout); return i&&o&&cin<o&&cout>i; })());
   if(gc) return `${gc.name} bu odada (çıkış: ${gc.checkout})`;
   const rc=rez.find(r=>r.room===room&&r.id!==skipId&&rezData(r).durum!=='iptal'&&(()=>{ const i=dateObj(r.cin); const o=dateObj(r.cout); return i&&o&&cin<o&&cout>i; })());
