@@ -1406,7 +1406,7 @@ async function pdfBosOdalar(){
     document.body.appendChild(area);
   }
   area.innerHTML = html;
-  area.style.cssText = 'display:block;position:fixed;left:-99999px;top:0;width:780px;background:#fff;padding:10mm;z-index:-1;';
+  area.style.cssText = 'display:block;position:static;width:780px;background:#fff;padding:10mm;margin-left:-99999px;';
 
   const dISO = new Date().toISOString().split('T')[0];
   toast('📄 PDF hazırlanıyor...');
