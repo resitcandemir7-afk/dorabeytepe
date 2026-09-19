@@ -1406,10 +1406,34 @@ async function pdfBosOdalar(){
     document.body.appendChild(area);
   }
   area.innerHTML = html;
-  area.style.cssText = 'display:block;position:static;width:780px;background:#fff;padding:10mm;margin-left:-99999px;';
+  // Normal (static) akışta, konumu kaydırmadan tut: html2canvas, position:fixed/absolute
+  // veya kaydırılmış (margin/left ile ekran dışı) elemanları ya 0 yükseklikte ölçüyor
+  // ya da görsel olarak boş yakalıyor. Bunun yerine tam ekran bir örtü ile gizliyoruz.
+  area.style.cssText = 'display:block;position:static;width:780px;background:#fff;padding:10mm;';
+
+  // İçerik viewport'tan uzun olabileceği için body/html'in sabit yükseklik + overflow:hidden
+  // ayarlarını geçici olarak kaldırıyoruz, yoksa alt kısımlar kırpılabilir.
+  const prevHtmlOverflow = document.documentElement.style.overflow;
+  const prevBodyOverflow = document.body.style.overflow;
+  const prevHtmlHeight = document.documentElement.style.height;
+  const prevBodyHeight = document.body.style.height;
+  document.documentElement.style.overflow = 'visible';
+  document.body.style.overflow = 'visible';
+  document.documentElement.style.height = 'auto';
+  document.body.style.height = 'auto';
+
+  // Kullanıcı ham içeriği görmesin diye tam ekran bir "hazırlanıyor" örtüsü göster.
+  let overlay = document.getElementById('pdf-gen-overlay');
+  if(!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'pdf-gen-overlay';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.cssText = 'position:fixed;inset:0;background:var(--bg,#f4f3f0);z-index:999999;display:flex;align-items:center;justify-content:center;font-family:"DM Sans",sans-serif;font-size:15px;font-weight:600;color:var(--text,#1a1814);';
+  overlay.textContent = '📄 PDF hazırlanıyor...';
+  await new Promise(r=>setTimeout(r,50));
 
   const dISO = new Date().toISOString().split('T')[0];
-  toast('📄 PDF hazırlanıyor...');
   try{
     await html2pdf().set({
       margin: 0,
@@ -1425,6 +1449,11 @@ async function pdfBosOdalar(){
     toast('❌ PDF oluşturulamadı');
   }finally{
     area.style.cssText = 'display:none;';
+    overlay.remove();
+    document.documentElement.style.overflow = prevHtmlOverflow;
+    document.body.style.overflow = prevBodyOverflow;
+    document.documentElement.style.height = prevHtmlHeight;
+    document.body.style.height = prevBodyHeight;
   }
 }
 
