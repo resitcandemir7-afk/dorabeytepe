@@ -348,6 +348,10 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
     <div class="stat" onclick="showStatPopup('bos')" style="cursor:pointer"><div class="sv" style="color:var(--green)" id="s-empty">0</div><div class="sl">Boş Oda</div></div>
     <div class="stat" onclick="showStatPopup('cikis')" style="cursor:pointer"><div class="sv" id="s-co">0</div><div class="sl">Çıkış Bugün</div></div>
   </div>
+  <div style="display:flex;gap:8px;padding:2px 0 10px;flex-wrap:wrap;">
+    <button class="btn-new" style="background:var(--green)" onclick="pdfBosOdalar(true)">📄 Boş Oda Listesi (Yarın Girişli Dahil)</button>
+    <button class="btn-new" style="background:var(--accent)" onclick="pdfBosOdalar(false)">📄 Boş Oda Listesi (Bugün+Yarın Hariç)</button>
+  </div>
   <div class="tabs">
     <div class="tab active" onclick="switchTab('guests',this)">Misafirler</div>
     <div class="tab" onclick="switchTab('rooms',this)">Odalar</div>
@@ -1307,6 +1311,84 @@ function renderRooms(){
         }).join('')}
       </div>
     </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// BOŞ ODA LİSTESİ — PDF
+// ═══════════════════════════════════════
+function pdfBosOdalar(includeTomorrow){
+  const occ = new Set(guests.filter(g=>g.status==='Konaklamada').map(g=>g.room));
+  const {tmr,tod} = arrivalsByRoom();
+  const excluded = new Set(tod.keys());
+  if(!includeTomorrow){ tmr.forEach((v,k)=>excluded.add(k)); }
+  const list = ALL_ROOMS.filter(r=>!occ.has(r) && !excluded.has(r));
+  if(!list.length){ toast('Bu kritere uyan boş oda yok'); return; }
+
+  const floorOf = r => FLOORS[1].includes(r)?1:(FLOORS[2].includes(r)?2:3);
+  const rows = list.map(r=>{
+    const ri = getRoomInfo(r);
+    return {room:r, floor:floorOf(r), type:ri.type, view:ri.view, ac:ri.ac, sqm:ri.sqm};
+  }).sort((a,b)=>parseInt(a.room)-parseInt(b.room));
+
+  const typeOrder=['Tek Kişilik','Çift Kişilik','2 Tek Yataklı','Suite'];
+  const groups={};
+  rows.forEach(x=>{ (groups[x.type]=groups[x.type]||[]).push(x); });
+  const typeKeys = Object.keys(groups).sort((a,b)=>{
+    const ia=typeOrder.indexOf(a), ib=typeOrder.indexOf(b);
+    return (ia<0?99:ia)-(ib<0?99:ib);
+  });
+
+  const todayLbl = new Date().toLocaleDateString('tr-TR',{weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+  const subtitle = includeTomorrow
+    ? 'Bugün girişli odalar hariçtir (yarın girişli odalar dahildir)'
+    : 'Bugün ve yarın girişli odalar hariçtir';
+
+  const esc = s => String(s).replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+  const sectionsHtml = typeKeys.map(t=>{
+    const items = groups[t];
+    const trs = items.map(x=>`<tr>
+      <td>${esc(x.room)}</td>
+      <td>${x.floor}. Kat</td>
+      <td>${x.sqm} m²</td>
+      <td>${esc(x.view)}</td>
+      <td>${x.ac?'❄️ Var':'— Yok'}</td>
+    </tr>`).join('');
+    return `<div class="grp">${esc(t)} (${items.length} oda)</div>
+    <table>
+      <thead><tr><th>Oda No</th><th>Kat</th><th>m²</th><th>Manzara</th><th>Klima</th></tr></thead>
+      <tbody>${trs}</tbody>
+    </table>`;
+  }).join('');
+
+  const summaryLine = typeKeys.map(t=>`${esc(t)}: ${groups[t].length}`).join(' · ');
+
+  const html = `<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8">
+  <title>Bos Oda Listesi</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;color:#222;margin:28px;}
+    h1{font-size:20px;margin:0 0 2px;color:#8b6914;}
+    .sub{font-size:12px;color:#666;margin-bottom:14px;}
+    .summary{font-size:13px;background:#fdf4e3;padding:8px 12px;border-radius:6px;margin-bottom:18px;}
+    .grp{font-size:13px;font-weight:bold;color:#8b6914;border-bottom:2px solid #8b6914;padding-bottom:3px;margin:16px 0 6px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+    th{background:#8b6914;color:#fff;text-align:left;padding:6px 8px;font-size:11px;}
+    td{padding:6px 8px;font-size:11px;border-bottom:1px solid #eee;}
+    tr:nth-child(even) td{background:#faf8f5;}
+    footer{margin-top:24px;font-size:10px;color:#999;}
+    @media print{ body{margin:12mm;} }
+  </style></head><body>
+    <h1>DORA BEYTEPE OTEL — Boş Oda Listesi</h1>
+    <div class="sub">${todayLbl} itibarıyla · ${subtitle}</div>
+    <div class="summary">Toplam <b>${rows.length} boş oda</b> — ${summaryLine}</div>
+    ${sectionsHtml}
+    <footer>Dora Beytepe Otel oda takip sisteminden otomatik olarak oluşturulmuştur.</footer>
+    <script>window.onload=function(){ setTimeout(function(){ window.print(); }, 300); };</script>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  if(!w){ toast('Popup engellendi — lütfen bu site için popup izni verin'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
 }
 
 function getRoomInfo(r){
