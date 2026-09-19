@@ -1355,7 +1355,8 @@ async function pdfBosOdalar(){
   const floorOf = r => FLOORS[1].includes(r)?1:(FLOORS[2].includes(r)?2:3);
   const rows = list.map(r=>{
     const ri = getRoomInfo(r);
-    return {room:r, floor:floorOf(r), type:ri.type, view:ri.view, ac:ri.ac, sqm:ri.sqm, tomorrow:tmr.has(r)};
+    const fy = fiyatlar[r] || {};
+    return {room:r, floor:floorOf(r), type:ri.type, view:ri.view, ac:ri.ac, sqm:ri.sqm, tomorrow:tmr.has(r), price:fy.gunluk||0};
   }).sort((a,b)=>parseInt(a.room)-parseInt(b.room));
 
   const typeOrder=['Tek Kişilik','Çift Kişilik','2 Tek Yataklı','3 Kişilik','Suite'];
@@ -1380,11 +1381,12 @@ async function pdfBosOdalar(){
       <td>${x.sqm} m²</td>
       <td>${esc(x.view)}</td>
       <td>${x.ac?'❄️ Var':'— Yok'}</td>
+      <td>${x.price?x.price.toLocaleString('tr-TR')+' ₺':'—'}</td>
       <td>${x.tomorrow?'⚠️ Yarın Giriş Var':''}</td>
     </tr>`).join('');
     return `<div class="grp">${esc(t)} (${items.length} oda)</div>
     <table>
-      <thead><tr><th>Oda No</th><th>Kat</th><th>m²</th><th>Manzara</th><th>Klima</th><th>Not</th></tr></thead>
+      <thead><tr><th>Oda No</th><th>Kat</th><th>m²</th><th>Manzara</th><th>Klima</th><th>Fiyat</th><th>Not</th></tr></thead>
       <tbody>${trs}</tbody>
     </table>`;
   }).join('');
