@@ -461,6 +461,7 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
             <option>Tek Kişilik</option>
             <option>Çift Kişilik</option>
             <option>2 Tek Yataklı</option>
+            <option>3 Kişilik</option>
             <option>Suite</option>
           </select>
         </div>
@@ -888,7 +889,15 @@ position:fixed;top:calc(var(--st)+68px);left:12px;right:12px;z-index:400;backgro
         <div class="rm-chip" onclick="selRmType('Tek Kişilik',this)">🛏 Tek Kişilik</div>
         <div class="rm-chip" onclick="selRmType('Çift Kişilik',this)">🛏 Çift Kişilik</div>
         <div class="rm-chip" onclick="selRmType('2 Tek Yataklı',this)">🛏🛏 2 Tek Yataklı</div>
+        <div class="rm-chip" onclick="selRmType('3 Kişilik',this)">🛏🛏🛏 3 Kişilik</div>
         <div class="rm-chip" onclick="selRmType('Suite',this)">👑 Suite</div>
+      </div>
+    </div>
+    <div class="fgrp" id="rm-3kisilik-cfg" style="display:none">
+      <label class="flbl">3 Kişilik Konfigürasyonu</label>
+      <div class="rm-chips" id="rm-3k-chips">
+        <div class="rm-chip" onclick="selRm3kCfg('1 Dbl + 1 Sng',this)">🛏 1 Dbl + 1 Sng</div>
+        <div class="rm-chip" onclick="selRm3kCfg('3 Sng',this)">🛏 3 Sng</div>
       </div>
     </div>
     <div class="frow">
@@ -984,7 +993,7 @@ async function loadRooms(){
 
 let ciPay='nakit', editId=null, delId=null;
 let extId=null, editRezId=null, lsGuestId=null, lsPay='nakit';
-let editRoomId=null, rmType='Çift Kişilik', rmView='Bahçe', rmAc=true, rmBal=false, rmTV=true, rmSafe=false, rmMbar=false;
+let editRoomId=null, rmType='Çift Kişilik', rmView='Bahçe', rmAc=true, rmBal=false, rmTV=true, rmSafe=false, rmMbar=false, rm3kCfg='1 Dbl + 1 Sng';
 
 // ═══════════════════════════════════════
 // HELPERS
@@ -1344,12 +1353,13 @@ function pdfBosOdalar(includeTomorrow){
     return {room:r, floor:floorOf(r), type:ri.type, view:ri.view, ac:ri.ac, sqm:ri.sqm};
   }).sort((a,b)=>parseInt(a.room)-parseInt(b.room));
 
-  const typeOrder=['Tek Kişilik','Çift Kişilik','2 Tek Yataklı','Suite'];
+  const typeOrder=['Tek Kişilik','Çift Kişilik','2 Tek Yataklı','3 Kişilik','Suite'];
   const groups={};
   rows.forEach(x=>{ (groups[x.type]=groups[x.type]||[]).push(x); });
   const typeKeys = Object.keys(groups).sort((a,b)=>{
-    const ia=typeOrder.indexOf(a), ib=typeOrder.indexOf(b);
-    return (ia<0?99:ia)-(ib<0?99:ib);
+    const idxOf = t => { const i=typeOrder.findIndex(x=>t===x||t.startsWith(x+' ')); return i<0?99:i; };
+    const ia=idxOf(a), ib=idxOf(b);
+    return (ia<0?99:ia)-(ib<0?99:ib) || a.localeCompare(b);
   });
 
   const todayLbl = new Date().toLocaleDateString('tr-TR',{weekday:'long', day:'2-digit', month:'long', year:'numeric'});
@@ -1424,9 +1434,22 @@ function openRoomModal(r){
   document.getElementById('rm-view').value=ri.view;
 
   // Room type chips
+  const is3k = /^3 Kişilik/.test(ri.type);
+  const cfgBox=document.getElementById('rm-3kisilik-cfg');
   document.querySelectorAll('#rm-types .rm-chip').forEach(c=>{
-    c.classList.toggle('sel', c.textContent.includes(ri.type.replace(/🛏|👑/g,'').trim()));
+    const label=c.textContent.replace(/🛏|👑/g,'').trim();
+    c.classList.toggle('sel', is3k ? label==='3 Kişilik' : label===ri.type.replace(/🛏|👑/g,'').trim());
   });
+  if(is3k){
+    cfgBox.style.display='block';
+    const m=ri.type.match(/\((.+)\)/);
+    rm3kCfg = m ? m[1] : rm3kCfg;
+    document.querySelectorAll('#rm-3k-chips .rm-chip').forEach(c=>{
+      c.classList.toggle('sel', c.textContent.replace(/🛏/g,'').trim()===rm3kCfg);
+    });
+  } else {
+    cfgBox.style.display='none';
+  }
 
   // Feature chips
   const feats={ac:rmAc,bal:rmBal,tv:rmTV,safe:rmSafe,mbar:rmMbar};
@@ -1459,8 +1482,25 @@ function openRoomModal(r){
 }
 
 function selRmType(t,el){
-  rmType=t;
   document.querySelectorAll('#rm-types .rm-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  const cfgBox=document.getElementById('rm-3kisilik-cfg');
+  if(t==='3 Kişilik'){
+    cfgBox.style.display='block';
+    rmType='3 Kişilik ('+rm3kCfg+')';
+    document.querySelectorAll('#rm-3k-chips .rm-chip').forEach(c=>{
+      c.classList.toggle('sel', c.textContent.replace(/🛏/g,'').trim()===rm3kCfg);
+    });
+  } else {
+    cfgBox.style.display='none';
+    rmType=t;
+  }
+}
+
+function selRm3kCfg(cfg,el){
+  rm3kCfg=cfg;
+  rmType='3 Kişilik ('+cfg+')';
+  document.querySelectorAll('#rm-3k-chips .rm-chip').forEach(c=>c.classList.remove('sel'));
   el.classList.add('sel');
 }
 
