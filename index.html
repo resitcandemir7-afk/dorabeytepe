@@ -2015,23 +2015,6 @@ function loadXLSXLib(){
   return _xlsxLibPromise;
 }
 
-// Oda/misafir kaydına göre renk kategorisi belirler
-function raporRenkKategori(g){
-  if(g.comp) return 'comp';
-  const ad = (g.name||'').toUpperCase();
-  if(ad.includes('BAKER')) return 'baker';
-  if(ad.includes('ELIN')||ad.includes('ELİN')) return 'elin';
-  if(!g.uzunDonem) return 'gunluk';
-  return 'diger';
-}
-const RAPOR_RENKLER = {
-  baker:  {fill:'BDD7EE', label:'Baker Hughes'},
-  elin:   {fill:'C6E0B4', label:'Elin Elektrik'},
-  gunluk: {fill:'FFE699', label:'Günlük Konaklama'},
-  comp:   {fill:'D9D9D9', label:'Comp (Ücretsiz)'},
-  diger:  {fill:'FFFFFF', label:'Diğer Uzun Dönem'}
-};
-
 // Verilen ISO tarih için toplu doluluk/gelir istatistiği (Karşılaştırma sekmesi için)
 function hesaplaGunIstatistik(dateISO){
   const trDate = toTR(dateISO);
@@ -2109,28 +2092,29 @@ async function exportRaporCSV(){
       Math.round(g.gunlukTutar*100)/100,
       g.bolen||'',
       Math.round((g.amt||0)*100)/100,
-      g.checkin, g.checkout, g.acenta||''
+      g.checkin, g.checkout, g.acenta||'Münferit'
     ]);
   });
 
   const dataStartIdx = headerRowIdx+1;
   const dataEndIdx = dataStartIdx + ALL_ROOMS.length - 1; // son oda satırı
 
-  // ═══ Alt toplam satırı (PMS örneğindeki gibi: dolu oda sayısı, günlük ücret toplamı, ortalama) ═══
+  // ═══ Alt toplam satırı — tek satır: sadece Satılan Oda, Toplam (günlük tahakkuk) ve Oda Başı Ortalama ═══
+  // Not: g.amt konaklamanın TÜM dönemine ait tutar (uzun dönem kiracılarda ay/dönem toplamı olabilir),
+  // bu yüzden günlük rapora ait "toplam" olarak g.amt toplanmaz — yanıltıcı olur. Bunun yerine
+  // her odanın o güne düşen payı (gunlukTutar, ekrandaki "Günlük Tahakkuk Geliri" ile birebir aynı
+  // toplam) kullanılır.
   const toplamGunlukUcret = list.filter(g=>!g.comp).reduce((s,g)=>s+g.gunlukTutar,0);
   const ortalamaGunlukUcret = satilanOda>0 ? toplamGunlukUcret/satilanOda : 0;
-  const toplamOdaTL = list.filter(g=>!g.comp).reduce((s,g)=>s+(g.amt||0),0);
   const footerRowIdx = dataEndIdx+1;
-  aoa.push(['','','',satilanOda,'','','',Math.round(toplamGunlukUcret*100)/100,'ORTALAMA',Math.round(ortalamaGunlukUcret*100)/100,'','','']);
-  aoa.push(['','TOPLAM ODA TL (Konukların Toplam Ödediği Tutar)','','','','','','','','',Math.round(toplamOdaTL*100)/100,'','']);
-  aoa.push(['','- Toplam -','','','','','','','','','','Ortalama','']);
+  aoa.push(['','TOPLAM','',satilanOda,'','','',Math.round(toplamGunlukUcret*100)/100,'ORTALAMA (Oda Başı)',Math.round(ortalamaGunlukUcret*100)/100,'','','']);
   // Comp (ücretsiz) odalar — PMS örneğindeki gibi ayrı satırlarda, oda no + isim + "Free"
   const compFooterStartIdx = aoa.length;
   compList.forEach(g=>{
     const parts = (g.name||'').trim().split(/\s+/).filter(Boolean);
     const soyad = parts.length>1 ? parts.pop() : '';
     const adi = parts.join(' ');
-    aoa.push([g.room, adi, soyad, '', '', '', 'Free', '', '', '', g.checkin, g.checkout, '']);
+    aoa.push([g.room, adi, soyad, '', '', '', 'Free', '', '', '', g.checkin, g.checkout, g.acenta||'Münferit']);
   });
   if(compList.length===0) aoa.push(['','Comp (ücretsiz) oda yok','','','','','','','','','','','']);
 
@@ -2161,27 +2145,23 @@ async function exportRaporCSV(){
     if(ws[addr]) ws[addr].s = headerStyle;
   });
 
+  const RAPOR_TEK_RENK = 'FFFFFF'; // Renk kategorileri kaldırıldı — rapor tamamen tek renk (beyaz)
   ALL_ROOMS.forEach((r,ri)=>{
-    const g = byRoom[r];
-    const isBlank = !g || g.comp;
-    const fill = !isBlank ? RAPOR_RENKLER[raporRenkKategori(g)].fill : 'F5F5F5';
     for(let ci=0;ci<header.length;ci++){
       const addr = XLSX.utils.encode_cell({r:dataStartIdx+ri,c:ci});
-      if(ws[addr]) ws[addr].s = {font:F(), fill:{fgColor:{rgb:fill}}, border:{bottom:{style:'thin',color:{rgb:'DDDDDD'}}}, alignment:noWrap};
+      if(ws[addr]) ws[addr].s = {font:F(), fill:{fgColor:{rgb:RAPOR_TEK_RENK}}, border:{bottom:{style:'thin',color:{rgb:'DDDDDD'}}}, alignment:noWrap};
     }
   });
 
   for(let ci=0;ci<header.length;ci++){
     const addr = XLSX.utils.encode_cell({r:footerRowIdx,c:ci});
-    if(ws[addr]) ws[addr].s = {font:F({bold:true}),fill:{fgColor:{rgb:'D9E1F2'}},alignment:noWrap};
-    const addr2 = XLSX.utils.encode_cell({r:footerRowIdx+1,c:ci});
-    if(ws[addr2]) ws[addr2].s = {font:F({bold:true}),fill:{fgColor:{rgb:'FCE4D6'}},alignment:noWrap};
+    if(ws[addr]) ws[addr].s = {font:F({bold:true}),fill:{fgColor:{rgb:RAPOR_TEK_RENK}},alignment:noWrap};
   }
-  // Comp (ücretsiz) satırları — kırmızı üstü çizili, dikkat çeksin diye açık kırmızı zeminde
+  // Comp (ücretsiz) satırları — artık renksiz, sadece üstü çizili ile ayırt edilir
   for(let ri=compFooterStartIdx; ri<aoa.length; ri++){
     for(let ci=0;ci<header.length;ci++){
       const addr = XLSX.utils.encode_cell({r:ri,c:ci});
-      if(ws[addr]) ws[addr].s = {font:F({strike:true,color:{rgb:'FF0000'}}), fill:{fgColor:{rgb:'FCE4E4'}}, alignment:noWrap};
+      if(ws[addr]) ws[addr].s = {font:F({strike:true}), fill:{fgColor:{rgb:RAPOR_TEK_RENK}}, alignment:noWrap};
     }
   }
 
